@@ -1,6 +1,6 @@
 "use client"
 import React, { useState, useRef, useEffect } from 'react';
-import { Bell, Image, Undo, Redo, X, Pin, Calendar } from 'lucide-react';
+import { Image, Undo, Redo, X, Pin, Calendar, Pencil, PencilIcon } from 'lucide-react';
 import { PlaceholderText } from '@/utils/Placeholdertext';
 
 function TaskAddBar() {
@@ -10,6 +10,7 @@ function TaskAddBar() {
   const textareaRef = useRef(null);
   const containerRef = useRef(null);
   const [placeholder, setPlaceholder] = useState(PlaceholderText[0]);
+  const [drawboardVisible, setDrawboardVisible] = useState(false);
 
   const adjustTextareaHeight = () => {
     const textarea = textareaRef.current;
@@ -57,6 +58,10 @@ function TaskAddBar() {
     setTitle('');
     setNote('');
   };
+  
+  const handleShowDrawBoard = () =>{
+    setDrawboardVisible(true);
+  }
 
   return (
     <div className="fixed z-40 top-20 left-1/2 -translate-x-1/2 w-full max-w-2xl px-4">

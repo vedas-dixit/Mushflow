@@ -9,11 +9,13 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@tldraw/tldraw": "^3.8.1",
     "date-fns": "^4.1.0",
     "lucide-react": "^0.475.0",
     "next": "15.1.7",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "tldraw": "^3.8.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
