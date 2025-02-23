@@ -13,7 +13,7 @@ function HeaderComponent() {
                             alt="Keep Logo"
                             className="w-10 h-10"
                         />
-                        <span className="ml-2 text-xl text-white">MeloTask</span>
+                        <span className="ml-2 text-xl text-white">MushFlow</span>
                     </div>
                 </div>
 
