@@ -33,7 +33,7 @@ function Card({ title, content, priority, color, pinned, completed, dueDate }: a
 
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setEditedContent(e.target.value.split('\n'));
-    adjustTextareaHeight(e.target.target);
+    adjustTextareaHeight(e.target);
   };
 
   const handleClickOutside = (e: MouseEvent) => {

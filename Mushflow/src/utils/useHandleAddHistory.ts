@@ -13,8 +13,10 @@ export const debounce = <F extends (...args: any[]) => any>(func: F, wait: numbe
 export interface HistoryState {
   title: string;
   note: string;
-  [key: string]: any; // Allow for additional properties if needed
+  dueDate: Date | null;
+  [key: string]: any; 
 }
+
 
 export interface UseHistoryResult {
   history: HistoryState[];

@@ -1,5 +1,5 @@
 import Card from "../cards/Card";
-import { dummyCards } from "@/utils/Placeholdertext";
+import { dummyCards } from "@/utils/usePlaceholdertext";
 function CardBox() {
 
   return (
