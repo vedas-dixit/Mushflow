@@ -4,14 +4,15 @@ import { Image, Undo, Redo, X, Pin, Calendar, Pencil, PencilIcon } from 'lucide-
 import { PlaceholderText } from '@/utils/usePlaceholdertext';
 import { useHistory, createDebouncedSave, HistoryState } from '@/utils/useHandleAddHistory';
 import ModernDatePicker from '../datepickercomponent/DatePickerComponent';
+import { saveTask } from '@/utils/taskService';
 
 function TaskAddBar() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [title, setTitle] = useState('');
   const [note, setNote] = useState('');
   const [isSaving, setIsSaving] = useState(false);
-  const textareaRef = useRef(null);
-  const containerRef = useRef(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [placeholder, setPlaceholder] = useState(PlaceholderText[0]);
   const [dueDate, setDueDate] = useState<Date | null>(null);
   // Initialize history management
@@ -72,7 +73,7 @@ function TaskAddBar() {
   }, []);
 
   const handleClickOutside = async (event: MouseEvent) => {
-    if (containerRef.current && !containerRef?.current?.contains(event.target)) {
+    if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
       await handleClose();
     }
   };
@@ -138,21 +139,20 @@ function TaskAddBar() {
 
   const handleClose = async () => {
     // Only attempt to save if the card was expanded and has content
-    if (isExpanded && !isSaving) {
+    if (isExpanded && !isSaving && (title.trim() || note.trim())) {
       try {
         setIsSaving(true);
         
         // Get the current user ID (you'll need to implement this based on your auth system)
         const userId = getUserId(); 
-        // await saveTask({
-        //   userId,
-        //   title,
-        //   content: note,
-        //   dueDate: dueDate ? dueDate.toISOString() : null,
-        //   pinned: false,
-        //   completed: false,
-        //   // Add other default values as needed
-        // });
+        await saveTask({
+          userId,
+          title,
+          content: note,
+          dueDate: dueDate ? dueDate.toISOString() : null,
+          pinned: false,
+          completed: false,
+        });
         
       } catch (error) {
         console.error("Error saving task:", error);

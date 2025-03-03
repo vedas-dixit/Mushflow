@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/src/scripts/setupDynamoDB.js
+/src/scripts/setupAWSDynamoDB.js
