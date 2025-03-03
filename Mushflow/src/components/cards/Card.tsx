@@ -26,9 +26,20 @@ function Card({ title, content, priority, color, pinned, completed, dueDate }: a
     };
   }, [isExpanded]);
 
-  const adjustTextareaHeight = (textarea: HTMLTextAreaElement) => {
-    textarea.style.height = 'auto';
-    textarea.style.height = `${textarea.scrollHeight}px`;
+    const adjustTextareaHeight = () => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      const maxHeight = window.innerHeight * 0.5; 
+      
+      if (textarea.scrollHeight > maxHeight) {
+        textarea.style.height = `${maxHeight}px`;
+        textarea.style.overflowY = 'auto';
+      } else {
+        textarea.style.height = `${textarea.scrollHeight}px`;
+        textarea.style.overflowY = 'hidden';
+      }
+    }
   };
 
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
