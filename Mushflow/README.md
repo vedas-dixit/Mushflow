@@ -1,88 +1,108 @@
-# Mushflow
+# Mushflow - Task Management System
 
-A task management application with DynamoDB integration.
+A modern task management application built with Next.js and DynamoDB.
 
-## DynamoDB Setup
+## Features
 
-This application uses DynamoDB to store tasks. You can use either a local DynamoDB instance for development or connect to AWS DynamoDB in production.
+- Create, view, and manage tasks
+- Task prioritization and labeling
+- Pin important tasks
+- Due date scheduling
+- Server-side rendering for improved performance
+- Authentication with NextAuth
 
-### Local Development Setup
+## Getting Started
 
-1. Install and run DynamoDB Local:
-   - Download DynamoDB Local from: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.html
-   - Extract and run it with: `java -Djava.library.path=./DynamoDBLocal_lib -jar DynamoDBLocal.jar -sharedDb`
+### Prerequisites
 
-2. Create the required table:
-   ```
-   npm run setup-db
-   ```
+- Node.js 18+ and npm
+- AWS account (for DynamoDB) or use mock data for development
 
-3. Start the development server:
-   ```
-   npm run dev
-   ```
+### Installation
 
-### AWS DynamoDB Setup
+1. Clone the repository
+```bash
+git clone https://github.com/yourusername/mushflow.git
+cd mushflow
+```
 
-1. Create the required table in AWS DynamoDB:
-   ```
-   npm run setup-aws-db
-   ```
+2. Install dependencies
+```bash
+npm install
+```
 
-2. If you need to delete the table:
-   ```
-   npm run delete-aws-db
-   ```
-
-### Environment Variables
-
-The application uses the following environment variables:
+3. Set up environment variables
+Create a `.env.local` file in the root directory with the following variables:
 
 ```
-AWS_ACCESS_KEY_ID=your_access_key
-AWS_SECRET_ACCESS_KEY=your_secret_key
+# DynamoDB Configuration
+DYNAMODB_TABLE_NAME=mushflow-tasks
 AWS_REGION=us-east-1
-DYNAMODB_TABLE=Mushflow
-USE_DYNAMODB_LOCAL=false  # Set to true for local development
+# AWS_ACCESS_KEY_ID=your-access-key-id
+# AWS_SECRET_ACCESS_KEY=your-secret-access-key
+
+# Use mock data for development (remove or set to false in production)
+USE_MOCK_DATA=true
+
+# NextAuth Configuration
+NEXTAUTH_SECRET=your-nextauth-secret
+NEXTAUTH_URL=http://localhost:3000
+
+# Google OAuth Configuration
+# GOOGLE_CLIENT_ID=your-google-client-id
+# GOOGLE_CLIENT_SECRET=your-google-client-secret
 ```
 
-For local development, you can use dummy credentials as the local DynamoDB instance doesn't validate them.
+For development, you can keep `USE_MOCK_DATA=true` to use mock data instead of connecting to DynamoDB.
 
-## API Routes
-
-The application provides the following API routes:
-
-- `POST /api/addTask` - Add a new task
-- `GET /api/getTask?userId=<userId>` - Get tasks for a specific user
-
-## DynamoDB Table Structure
-
-The DynamoDB table uses a composite key structure with PK (Partition Key) and SK (Sort Key):
-
-- **Primary Key**: Composite of PK and SK
-  - PK: `USER#<userId>` (Partition Key)
-  - SK: `TASK#<taskId>` (Sort Key)
-
-- **Global Secondary Index (GSI1)**:
-  - GSI1PK: `USER#<userId>` (Partition Key)
-  - GSI1SK: `TASK#<timestamp>` (Sort Key)
-
-This structure allows for efficient querying of tasks by user ID and sorting by creation time.
-
-## Task Structure
-
-Tasks have the following structure:
-
-```typescript
-interface Task {
-  id: string;
-  userId: string;
-  title: string;
-  content: string;
-  dueDate: string | null;
-  createdAt: string;
-  updatedAt: string;
-  pinned: boolean;
-  completed: boolean;
-}
+4. Run the development server
+```bash
+npm run dev
 ```
+
+5. Open [http://localhost:3000](http://localhost:3000) in your browser
+
+### DynamoDB Setup
+
+If you want to use real DynamoDB instead of mock data:
+
+1. Create a DynamoDB table named `mushflow-tasks` with the following schema:
+   - Partition key: `PK` (String)
+   - Sort key: `SK` (String)
+   - GSI1: Partition key `GSI1PK` (String), Sort key `GSI1SK` (String)
+
+2. Create an IAM user with permissions to access this table
+
+3. Update your `.env.local` file with your AWS credentials and set `USE_MOCK_DATA=false`
+
+## Project Structure
+
+- `/src/app` - Next.js App Router pages and API routes
+- `/src/components` - React components
+- `/src/types` - TypeScript type definitions
+- `/src/utils` - Utility functions and services
+
+## Development
+
+### Mock Data
+
+During development, you can use mock data by setting `USE_MOCK_DATA=true` in your `.env.local` file. This will generate random tasks for testing without requiring a DynamoDB connection.
+
+### Authentication
+
+The application uses NextAuth for authentication. For development, you can use the anonymous user ID. For production, set up Google OAuth by providing your Google client ID and secret in the `.env.local` file.
+
+## Deployment
+
+1. Set up a DynamoDB table in your AWS account
+2. Configure environment variables in your hosting platform
+3. Deploy the application
+
+```bash
+npm run build
+npm start
+```
+
+## License
+
+This project is licensed under the MIT License.

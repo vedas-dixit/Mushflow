@@ -35,9 +35,20 @@ export async function GET(request: Request) {
       userId: item.userId,
       title: item.title,
       content: item.content,
+      
+      // Task metadata
+      priority: item.priority || 'low',
+      labels: item.labels || [],
       dueDate: item.dueDate,
+      reminders: item.reminders || [],
+      attachments: item.attachments || [],
+      recurring: item.recurring || null,
+      
+      // Timestamps
       createdAt: item.createdAt,
       updatedAt: item.updatedAt,
+      
+      // Status flags
       pinned: item.pinned,
       completed: item.completed
     }));

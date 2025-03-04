@@ -1,4 +1,5 @@
 import React from "react";
+import { TaskPriority } from "@/types/Task";
 
 // Simple debounce function
 export const debounce = <F extends (...args: any[]) => any>(func: F, wait: number) => {
@@ -10,13 +11,15 @@ export const debounce = <F extends (...args: any[]) => any>(func: F, wait: numbe
   };
 };
 
+// Define the state structure for history tracking
 export interface HistoryState {
   title: string;
   note: string;
   dueDate: Date | null;
-  [key: string]: any; 
+  priority: TaskPriority;
+  labels: string[];
+  isPinned: boolean;
 }
-
 
 export interface UseHistoryResult {
   history: HistoryState[];
@@ -29,83 +32,69 @@ export interface UseHistoryResult {
   resetHistory: (initialState?: HistoryState) => void;
 }
 
-export const useHistory = (
-  initialState: HistoryState,
-  maxHistorySize = 50
-): UseHistoryResult => {
+// Create a debounced save function for history
+export const createDebouncedSave = (saveToHistory: (state: HistoryState) => void, wait = 500) => {
+  return debounce((state: HistoryState) => {
+    saveToHistory(state);
+  }, wait);
+};
+
+// Custom hook for managing history
+export const useHistory = (initialState: HistoryState): UseHistoryResult => {
   const [history, setHistory] = React.useState<HistoryState[]>([initialState]);
   const [historyIndex, setHistoryIndex] = React.useState(0);
 
-  const canUndo = historyIndex > 0;
-  const canRedo = historyIndex < history.length - 1;
-
-  // Save state to history
-  const saveToHistory = React.useCallback((newState: HistoryState) => {
-    // Compare with current state to avoid duplicate entries
-    const currentState = history[historyIndex];
-    const hasChanged = Object.keys(newState).some(
-      key => newState[key] !== currentState[key]
-    );
-
-    if (hasChanged) {
+  // Save current state to history
+  const saveToHistory = (state: HistoryState) => {
+    // Only save if the state is different from the current state
+    if (
+      history[historyIndex].title !== state.title ||
+      history[historyIndex].note !== state.note ||
+      history[historyIndex].dueDate !== state.dueDate ||
+      history[historyIndex].priority !== state.priority ||
+      JSON.stringify(history[historyIndex].labels) !== JSON.stringify(state.labels) ||
+      history[historyIndex].isPinned !== state.isPinned
+    ) {
+      // Remove any future history if we're not at the end
       const newHistory = history.slice(0, historyIndex + 1);
-      newHistory.push(newState);
-      
-      // Limit history size
-      if (newHistory.length > maxHistorySize) {
-        newHistory.shift();
-        setHistoryIndex(prev => prev - 1);
-      }
-      
-      setHistory(newHistory);
-      setHistoryIndex(newHistory.length - 1);
+      setHistory([...newHistory, state]);
+      setHistoryIndex(newHistory.length);
     }
-  }, [history, historyIndex, maxHistorySize]);
+  };
 
   // Handle undo
-  const handleUndo = React.useCallback(() => {
-    if (canUndo) {
-      const prevState = history[historyIndex - 1];
+  const handleUndo = (): HistoryState | null => {
+    if (historyIndex > 0) {
       setHistoryIndex(historyIndex - 1);
-      return prevState;
+      return history[historyIndex - 1];
     }
     return null;
-  }, [canUndo, history, historyIndex]);
+  };
 
   // Handle redo
-  const handleRedo = React.useCallback(() => {
-    if (canRedo) {
-      const nextState = history[historyIndex + 1];
+  const handleRedo = (): HistoryState | null => {
+    if (historyIndex < history.length - 1) {
       setHistoryIndex(historyIndex + 1);
-      return nextState;
+      return history[historyIndex + 1];
     }
     return null;
-  }, [canRedo, history, historyIndex]);
+  };
 
   // Reset history
-  const resetHistory = React.useCallback((newInitialState = initialState) => {
-    setHistory([newInitialState]);
+  const resetHistory = (newInitialState?: HistoryState) => {
+    const initialStateToUse = newInitialState || initialState;
+    setHistory([initialStateToUse]);
     setHistoryIndex(0);
-  }, [initialState]);
+  };
 
   return {
     history,
     historyIndex,
-    canUndo,
-    canRedo,
+    canUndo: historyIndex > 0,
+    canRedo: historyIndex < history.length - 1,
     saveToHistory,
     handleUndo,
     handleRedo,
-    resetHistory
+    resetHistory,
   };
-};
-
-// Create a debounced history saver
-export const createDebouncedSave = (
-  saveToHistory: (state: HistoryState) => void,
-  wait = 300
-) => {
-  return debounce((state: HistoryState) => {
-    saveToHistory(state);
-  }, wait);
 };

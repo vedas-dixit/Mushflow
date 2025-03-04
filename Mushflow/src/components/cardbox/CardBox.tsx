@@ -1,7 +1,15 @@
+"use client";
+
 import Card from "../cards/Card";
 import { dummyCards } from "@/utils/usePlaceholdertext";
-function CardBox() {
+import { Task } from "@/types/Task";
 
+interface CardBoxProps {
+  tasks: Task[];
+}
+
+function CardBox({ tasks }: CardBoxProps) {
+  console.log(tasks);
   return (
     <div className="w-full h-full pl-16 px-4 mt-28 flex justify-center">
       <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-5 space-y-5">

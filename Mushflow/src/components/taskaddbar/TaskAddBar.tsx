@@ -1,20 +1,36 @@
 "use client"
 import React, { useState, useRef, useEffect } from 'react';
-import { Image, Undo, Redo, X, Pin, Calendar, Pencil, PencilIcon } from 'lucide-react';
+import { Image, Undo, Redo, X, Pin, Calendar, Tag, Flag } from 'lucide-react';
 import { PlaceholderText } from '@/utils/usePlaceholdertext';
 import { useHistory, createDebouncedSave, HistoryState } from '@/utils/useHandleAddHistory';
 import ModernDatePicker from '../datepickercomponent/DatePickerComponent';
 import { saveTask } from '@/utils/taskService';
+import { TaskPriority } from '@/types/Task';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 function TaskAddBar() {
+  const { data: session } = useSession();
+  const router = useRouter();
   const [isExpanded, setIsExpanded] = useState(false);
   const [title, setTitle] = useState('');
   const [note, setNote] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [priority, setPriority] = useState<TaskPriority>('low');
+  const [labels, setLabels] = useState<string[]>([]);
+  const [isPinned, setIsPinned] = useState(false);
+  const [showPriorityMenu, setShowPriorityMenu] = useState(false);
+  const [showLabelsMenu, setShowLabelsMenu] = useState(false);
+  const [labelInput, setLabelInput] = useState('');
+  
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const priorityMenuRef = useRef<HTMLDivElement>(null);
+  const labelsMenuRef = useRef<HTMLDivElement>(null);
+  
   const [placeholder, setPlaceholder] = useState(PlaceholderText[0]);
   const [dueDate, setDueDate] = useState<Date | null>(null);
+  
   // Initialize history management
   const {
     canUndo,
@@ -23,13 +39,32 @@ function TaskAddBar() {
     handleUndo: undoHistory,
     handleRedo: redoHistory,
     resetHistory
-  } = useHistory({ title: '', note: '', dueDate: null });
+  } = useHistory({ 
+    title: '', 
+    note: '', 
+    dueDate: null,
+    priority: 'low',
+    labels: [],
+    isPinned: false
+  });
 
   // Create debounced save function
   const debouncedSave = React.useMemo(
     () => createDebouncedSave(saveToHistory),
     [saveToHistory]
   );
+
+  // Predefined labels
+  const predefinedLabels = [
+    { id: 'work', name: 'Work', color: '#4285F4' },
+    { id: 'personal', name: 'Personal', color: '#EA4335' },
+    { id: 'important', name: 'Important', color: '#FBBC05' },
+    { id: 'urgent', name: 'Urgent', color: '#FF5252' },
+    { id: 'health', name: 'Health', color: '#34A853' },
+    { id: 'finance', name: 'Finance', color: '#8E24AA' },
+    { id: 'learning', name: 'Learning', color: '#00ACC1' },
+    { id: 'family', name: 'Family', color: '#FF6D00' },
+  ];
 
   const adjustTextareaHeight = () => {
     const textarea = textareaRef.current;
@@ -76,6 +111,16 @@ function TaskAddBar() {
     if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
       await handleClose();
     }
+    
+    // Close priority menu when clicking outside
+    if (priorityMenuRef.current && !priorityMenuRef.current.contains(event.target as Node)) {
+      setShowPriorityMenu(false);
+    }
+    
+    // Close labels menu when clicking outside
+    if (labelsMenuRef.current && !labelsMenuRef.current.contains(event.target as Node)) {
+      setShowLabelsMenu(false);
+    }
   };
 
   useEffect(() => {
@@ -96,7 +141,14 @@ function TaskAddBar() {
     if (e.key === 'Enter' && !e.shiftKey && !isExpanded) {
       e.preventDefault();
       setIsExpanded(true);
-      resetHistory({ title: '', note: '', dueDate: null });
+      resetHistory({ 
+        title: '', 
+        note: '', 
+        dueDate: null,
+        priority: 'low',
+        labels: [],
+        isPinned: false
+      });
     }
   };
 
@@ -106,6 +158,9 @@ function TaskAddBar() {
       setTitle(prevState.title);
       setNote(prevState.note);
       setDueDate(prevState.dueDate);
+      setPriority(prevState.priority || 'low');
+      setLabels(prevState.labels || []);
+      setIsPinned(prevState.isPinned || false);
     }
   };
 
@@ -116,6 +171,9 @@ function TaskAddBar() {
       setTitle(nextState.title);
       setNote(nextState.note);
       setDueDate(nextState.dueDate);
+      setPriority(nextState.priority || 'low');
+      setLabels(nextState.labels || []);
+      setIsPinned(nextState.isPinned || false);
     }
   };
 
@@ -143,16 +201,21 @@ function TaskAddBar() {
       try {
         setIsSaving(true);
         
-        // Get the current user ID (you'll need to implement this based on your auth system)
-        const userId = getUserId(); 
+        // Get the current user ID from the session
+        const userId = getUserId();
         await saveTask({
           userId,
           title,
           content: note,
+          priority,
+          labels,
           dueDate: dueDate ? dueDate.toISOString() : null,
-          pinned: false,
+          pinned: isPinned,
           completed: false,
         });
+        
+        // Refresh the page to show the new task
+        router.refresh();
         
       } catch (error) {
         console.error("Error saving task:", error);
@@ -164,6 +227,9 @@ function TaskAddBar() {
         setTitle('');
         setNote('');
         setDueDate(null);
+        setPriority('low');
+        setLabels([]);
+        setIsPinned(false);
         resetHistory();
       }
     } else {
@@ -172,34 +238,182 @@ function TaskAddBar() {
       setTitle('');
       setNote('');
       setDueDate(null);
+      setPriority('low');
+      setLabels([]);
+      setIsPinned(false);
       resetHistory();
     }
   };
 
-  // Function to get the current user ID - replace with your actual implementation
+  // Function to get the current user ID from the session
   const getUserId = () => {
-    // This is a placeholder - implement based on your authentication system
-    // For example, you might get this from a context, local storage, or a cookie
-    return "current-user-id";
+    if (session?.user) {
+      // Use the user's ID or email as a fallback
+      return session.user.id || session.user.email || "anonymous";
+    }
+    // Fallback to anonymous if no user is available
+    return "anonymous";
   };
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newTitle = e.target.value;
     setTitle(newTitle);
-    debouncedSave({ title: newTitle, note, dueDate });
+    debouncedSave({ 
+      title: newTitle, 
+      note, 
+      dueDate,
+      priority,
+      labels,
+      isPinned
+    });
   };
 
   const handleNoteChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newNote = e.target.value;
     setNote(newNote);
-    debouncedSave({ title, note: newNote, dueDate });
+    debouncedSave({ 
+      title, 
+      note: newNote, 
+      dueDate,
+      priority,
+      labels,
+      isPinned
+    });
   };
 
   const handleDateChange = (date: Date | null) => {
     setDueDate(date);
-    debouncedSave({ title, note, dueDate: date });
+    debouncedSave({ 
+      title, 
+      note, 
+      dueDate: date,
+      priority,
+      labels,
+      isPinned
+    });
   };
   
+  const handlePriorityChange = (newPriority: TaskPriority) => {
+    setPriority(newPriority);
+    setShowPriorityMenu(false);
+    debouncedSave({ 
+      title, 
+      note, 
+      dueDate,
+      priority: newPriority,
+      labels,
+      isPinned
+    });
+  };
+  
+  const handleAddLabel = (labelId: string) => {
+    if (!labels.includes(labelId)) {
+      const newLabels = [...labels, labelId];
+      setLabels(newLabels);
+      debouncedSave({ 
+        title, 
+        note, 
+        dueDate,
+        priority,
+        labels: newLabels,
+        isPinned
+      });
+    }
+  };
+  
+  const handleRemoveLabel = (labelId: string) => {
+    const newLabels = labels.filter(id => id !== labelId);
+    setLabels(newLabels);
+    debouncedSave({ 
+      title, 
+      note, 
+      dueDate,
+      priority,
+      labels: newLabels,
+      isPinned
+    });
+  };
+  
+  const handleAddCustomLabel = () => {
+    if (labelInput.trim()) {
+      handleAddLabel(labelInput.trim());
+      setLabelInput('');
+    }
+  };
+
+  const handleTogglePin = () => {
+    const newPinnedState = !isPinned;
+    setIsPinned(newPinnedState);
+    debouncedSave({
+      title,
+      note,
+      dueDate,
+      priority,
+      labels,
+      isPinned: newPinnedState
+    });
+  };
+
+  // Get priority color
+  const getPriorityColor = (p: TaskPriority) => {
+    switch (p) {
+      case 'high': return 'text-red-500';
+      case 'medium': return 'text-yellow-500';
+      case 'low': return 'text-green-500';
+      default: return 'text-green-500';
+    }
+  };
+
+  // Handle saving the task
+  const handleSaveTask = async () => {
+    if (isExpanded && title.trim() && !isSaving) {
+      setIsSaving(true);
+      try {
+        // Get the current user ID from the session
+        const userId = getUserId();
+        const savedTask = await saveTask({
+          userId,
+          title,
+          content: note,
+          priority,
+          labels,
+          dueDate: dueDate ? dueDate.toISOString() : null,
+          pinned: isPinned,
+          completed: false,
+        });
+        
+        console.log('Task saved successfully:', savedTask);
+        
+        // Force a hard refresh to reload the page and fetch new data
+        window.location.href = window.location.pathname;
+        
+      } catch (error) {
+        console.error("Error saving task:", error);
+        // Optionally show an error notification to the user
+      } finally {
+        setIsSaving(false);
+        // Reset the form regardless of save success/failure
+        setIsExpanded(false);
+        setTitle('');
+        setNote('');
+        setDueDate(null);
+        setPriority('low');
+        setLabels([]);
+        setIsPinned(false);
+        resetHistory();
+      }
+    } else {
+      // If not expanded or already saving, just reset the form
+      setIsExpanded(false);
+      setTitle('');
+      setNote('');
+      setDueDate(null);
+      setPriority('low');
+      setLabels([]);
+      setIsPinned(false);
+      resetHistory();
+    }
+  };
 
   return (
     <div className="fixed z-40 top-20 left-1/2 -translate-x-1/2 w-full max-w-2xl px-4">
@@ -227,7 +441,14 @@ function TaskAddBar() {
             onClick={() => {
               if (!isExpanded) {
                 setIsExpanded(true);
-                resetHistory({ title: '', note: '', dueDate: null });
+                resetHistory({ 
+                  title: '', 
+                  note: '', 
+                  dueDate: null,
+                  priority: 'low',
+                  labels: [],
+                  isPinned: false
+                });
               }
             }}
             onKeyDown={handleKeyDown}
@@ -240,19 +461,161 @@ function TaskAddBar() {
           )}
         </div>
 
-        <div className={`overflow-hidden transition-all duration-200 ${isExpanded ? 'h-auto opacity-100 mt-4' : 'h-0 opacity-0'}`}>
-          <div className="flex items-center justify-between">
+        {isExpanded && (
+          <div className="mt-2">
+            {labels.length > 0 && (
+              <div className="flex flex-wrap gap-1 mb-2">
+                {labels.map(labelId => {
+                  const label = predefinedLabels.find(l => l.id === labelId) || { id: labelId, name: labelId, color: '#9E9E9E' };
+                  return (
+                    <div 
+                      key={label.id} 
+                      className="flex items-center bg-opacity-20 rounded px-2 py-0.5 text-xs"
+                      style={{ backgroundColor: `${label.color}40`, color: label.color }}
+                    >
+                      {label.name}
+                      <button 
+                        className="ml-1 hover:text-white"
+                        onClick={() => handleRemoveLabel(label.id)}
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {isExpanded && (
+          <div className="flex items-center justify-between mt-4">
             <div className="flex space-x-2 text-gray-400 z-[9999]">
               <ModernDatePicker
                 selectedDate={dueDate}
                 onChange={handleDateChange}
               />
+              
+              {/* Priority Selector */}
+              <div className="relative">
+                <button 
+                  className={`p-2 hover:bg-neutral-700 rounded-full ${getPriorityColor(priority)}`}
+                  onClick={() => setShowPriorityMenu(!showPriorityMenu)}
+                  title="Set priority"
+                >
+                  <Flag size={18} />
+                </button>
+                
+                {showPriorityMenu && (
+                  <div 
+                    ref={priorityMenuRef}
+                    className="absolute left-0 bottom-full mb-2 bg-neutral-700 rounded-md shadow-lg p-2 w-32"
+                  >
+                    <div className="text-xs text-gray-300 mb-1 px-2">Priority</div>
+                    <button 
+                      className="flex items-center w-full px-2 py-1 text-red-500 hover:bg-neutral-600 rounded"
+                      onClick={() => handlePriorityChange('high')}
+                    >
+                      <Flag size={14} className="mr-2" />
+                      High
+                    </button>
+                    <button 
+                      className="flex items-center w-full px-2 py-1 text-yellow-500 hover:bg-neutral-600 rounded"
+                      onClick={() => handlePriorityChange('medium')}
+                    >
+                      <Flag size={14} className="mr-2" />
+                      Medium
+                    </button>
+                    <button 
+                      className="flex items-center w-full px-2 py-1 text-green-500 hover:bg-neutral-600 rounded"
+                      onClick={() => handlePriorityChange('low')}
+                    >
+                      <Flag size={14} className="mr-2" />
+                      Low
+                    </button>
+                  </div>
+                )}
+              </div>
+              
+              {/* Labels Selector */}
+              <div className="relative">
+                <button 
+                  className="p-2 hover:bg-neutral-700 rounded-full"
+                  onClick={() => setShowLabelsMenu(!showLabelsMenu)}
+                  title="Add labels"
+                >
+                  <Tag size={18} />
+                </button>
+                
+                {showLabelsMenu && (
+                  <div 
+                    ref={labelsMenuRef}
+                    className="absolute left-0 bottom-full mb-2 bg-neutral-700 rounded-md shadow-lg p-2 w-48"
+                  >
+                    <div className="text-xs text-gray-300 mb-1 px-2">Labels</div>
+                    
+                    <div className="mb-2 px-2">
+                      <div className="flex items-center">
+                        <input
+                          type="text"
+                          value={labelInput}
+                          onChange={(e) => setLabelInput(e.target.value)}
+                          placeholder="Add custom label"
+                          className="w-full bg-neutral-600 text-white text-xs rounded px-2 py-1 outline-none"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleAddCustomLabel();
+                            }
+                          }}
+                        />
+                        <button 
+                          className="ml-1 text-gray-300 hover:text-white"
+                          onClick={handleAddCustomLabel}
+                        >
+                          <X size={14} className="rotate-45" />
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <div className="max-h-40 overflow-y-auto">
+                      {predefinedLabels.map(label => (
+                        <button 
+                          key={label.id}
+                          className={`flex items-center w-full px-2 py-1 hover:bg-neutral-600 rounded mb-1 ${labels.includes(label.id) ? 'bg-neutral-600' : ''}`}
+                          onClick={() => labels.includes(label.id) ? handleRemoveLabel(label.id) : handleAddLabel(label.id)}
+                          style={{ color: label.color }}
+                        >
+                          <div 
+                            className="w-3 h-3 rounded-full mr-2"
+                            style={{ backgroundColor: label.color }}
+                          ></div>
+                          {label.name}
+                          {labels.includes(label.id) && (
+                            <div className="ml-auto text-gray-300">
+                              <X size={12} />
+                            </div>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+              
               <button className="p-2 hover:bg-neutral-700 rounded-full">
                 <Image size={18} />
               </button>
-              <button className="p-2 hover:bg-neutral-700 rounded-full">
-                <Pin size={18} />
+              
+              {/* Pin Button */}
+              <button 
+                className={`p-2 hover:bg-neutral-700 rounded-full ${isPinned ? 'text-yellow-300' : 'text-gray-400'}`}
+                onClick={handleTogglePin}
+                title={isPinned ? "Unpin note" : "Pin note"}
+              >
+                <Pin size={18} fill={isPinned ? "currentColor" : "none"} />
               </button>
+              
               <button
                 className="p-2 hover:bg-neutral-700 rounded-full"
                 onClick={handleUndo}
@@ -272,7 +635,7 @@ function TaskAddBar() {
             </div>
             <div className="flex space-x-2">
               <button
-                onClick={handleClose}
+                onClick={handleSaveTask}
                 className="px-4 py-1 text-sm text-gray-300 hover:bg-neutral-700 rounded-md"
                 disabled={isSaving}
               >
@@ -280,7 +643,7 @@ function TaskAddBar() {
               </button>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

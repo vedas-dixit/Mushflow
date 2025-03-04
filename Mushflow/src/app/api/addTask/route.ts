@@ -26,18 +26,29 @@ export async function POST(request: Request) {
       PK: `USER#${body.userId}`,
       SK: `TASK#${taskId}`,
       
-      // GSI1 attributes for querying tasks by user
+      // GSI1 attributes for querying tasks by user and due date
       GSI1PK: `USER#${body.userId}`,
-      GSI1SK: `TASK#${now}`, // Sort by creation time
+      GSI1SK: body.dueDate ? `TASK#${body.dueDate}` : `TASK#${now}`,
       
       // Task attributes
       id: taskId,
       userId: body.userId,
       title: body.title,
       content: body.content || '',
+      
+      // Task metadata
+      priority: body.priority || 'low',
+      labels: body.labels || [],
       dueDate: body.dueDate || null,
+      reminders: body.reminders || [],
+      attachments: body.attachments || [],
+      recurring: body.recurring || null,
+      
+      // Timestamps
       createdAt: now,
       updatedAt: now,
+      
+      // Status flags
       pinned: body.pinned || false,
       completed: body.completed || false,
     };
