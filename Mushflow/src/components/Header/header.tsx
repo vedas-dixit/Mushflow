@@ -1,8 +1,14 @@
-import React from 'react';
-import { Search, Settings, LayoutGrid } from 'lucide-react';
+"use client";
+
+import React, { useEffect } from 'react';
+import { Search, Settings, LayoutGrid, LogIn, LogOut } from 'lucide-react';
 import { LightbulbIcon, Bell, PencilLine, Archive, Trash } from 'lucide-react';
+import { useSession, signIn, signOut } from 'next-auth/react';
 
 function HeaderComponent() {
+    const { data: session, status } = useSession();
+    const isAuthenticated = status === 'authenticated';
+
     return (
         <>
             <div className="sticky top-0 left-0 right-0 flex items-center w-full px-4 py-2 bg-stone-800 shadow-sm z-30">
@@ -35,13 +41,49 @@ function HeaderComponent() {
                     <button className="p-2 hover:bg-gray-100 rounded-full">
                         <LayoutGrid className="w-6 h-6 text-gray-600" />
                     </button>
-                    <button className="ml-2">
-                        <img
-                            src="/group.png"
-                            alt="Profile"
-                            className="w-8 h-8 rounded-full"
-                        />
-                    </button>
+                    
+                    {isAuthenticated ? (
+                        <div className="flex items-center space-x-2">
+                            {session?.user?.image ? (
+                                <button 
+                                    className="ml-2 relative group"
+                                    onClick={() => signOut()}
+                                >
+                                    <img
+                                        src={session.user.image}
+                                        alt={session.user.name || "Profile"}
+                                        className="w-8 h-8 rounded-full"
+                                    />
+                                    <div className="absolute right-0 top-full mt-1 w-32 bg-white shadow-lg rounded-md p-2 hidden group-hover:block">
+                                        <div className="text-sm text-gray-800 font-medium mb-1">{session.user.name}</div>
+                                        <div className="text-xs text-gray-500 mb-2">{session.user.email}</div>
+                                        <button 
+                                            onClick={() => signOut()} 
+                                            className="flex items-center text-sm text-red-600 hover:text-red-800"
+                                        >
+                                            <LogOut className="w-4 h-4 mr-1" />
+                                            Sign out
+                                        </button>
+                                    </div>
+                                </button>
+                            ) : (
+                                <button 
+                                    className="ml-2 bg-gray-700 w-8 h-8 rounded-full flex items-center justify-center text-white"
+                                    onClick={() => signOut()}
+                                >
+                                    {session?.user?.name?.charAt(0) || "U"}
+                                </button>
+                            )}
+                        </div>
+                    ) : (
+                        <button 
+                            onClick={() => signIn('google')}
+                            className="flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
+                        >
+                            <LogIn className="w-4 h-4 mr-1" />
+                            <span>Sign in</span>
+                        </button>
+                    )}
                 </div>
             </div>
 
