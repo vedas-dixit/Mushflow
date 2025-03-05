@@ -3,7 +3,6 @@
 import { Task } from '@/types/Task';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, QueryCommand } from '@aws-sdk/lib-dynamodb';
-import { generateMockTasks } from './mockData';
 
 // Check for required environment variables
 const REGION = process.env.AWS_REGION || 'us-east-1';
@@ -40,10 +39,7 @@ export async function getTasks(userId: string): Promise<Task[]> {
   }
 
   // Use mock data if DynamoDB is not configured
-  if (USE_MOCK_DATA) {
-    console.log('Using mock data instead of DynamoDB');
-    return generateMockTasks(userId, 8);
-  }
+
 
   // Check if table name is available
   if (!TABLE_NAME) {
@@ -94,7 +90,6 @@ export async function getTasks(userId: string): Promise<Task[]> {
     return tasks;
   } catch (error) {
     console.error('Error fetching tasks:', error);
-    console.log('Falling back to mock data');
-    return generateMockTasks(userId, 5);
+    return [];
   }
 } 
