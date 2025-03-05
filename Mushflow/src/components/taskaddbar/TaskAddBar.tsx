@@ -215,7 +215,7 @@ function TaskAddBar() {
         });
         
         // Refresh the page to show the new task
-        router.refresh();
+        // router.refresh();
         
       } catch (error) {
         console.error("Error saving task:", error);
@@ -385,7 +385,7 @@ function TaskAddBar() {
         console.log('Task saved successfully:', savedTask);
         
         // Force a hard refresh to reload the page and fetch new data
-        window.location.href = window.location.pathname;
+        // window.location.href = window.location.pathname;
         
       } catch (error) {
         console.error("Error saving task:", error);

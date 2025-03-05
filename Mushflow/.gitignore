@@ -42,3 +42,4 @@ next-env.d.ts
 
 /src/scripts/setupDynamoDB.js
 /src/scripts/setupAWSDynamoDB.js
+/src/scripts/delete.js
