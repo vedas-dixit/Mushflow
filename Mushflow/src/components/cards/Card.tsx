@@ -3,7 +3,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { Pin, CheckCircle, Calendar, X, Flag, Tag } from "lucide-react";
 import { format } from "date-fns";
 import { Task, TaskPriority } from "@/types/Task";
-
+import { predefinedLabels } from "@/utils/predefinedLabels";
 interface CardProps {
   title: string;
   content: string;
@@ -16,16 +16,7 @@ interface CardProps {
 }
 
 // Predefined labels (should match those in TaskAddBar)
-const predefinedLabels = [
-  { id: 'work', name: 'Work', color: '#4285F4' },
-  { id: 'personal', name: 'Personal', color: '#EA4335' },
-  { id: 'important', name: 'Important', color: '#FBBC05' },
-  { id: 'urgent', name: 'Urgent', color: '#FF5252' },
-  { id: 'health', name: 'Health', color: '#34A853' },
-  { id: 'finance', name: 'Finance', color: '#8E24AA' },
-  { id: 'learning', name: 'Learning', color: '#00ACC1' },
-  { id: 'family', name: 'Family', color: '#FF6D00' },
-];
+
 
 function Card({ title, content, priority = 'low', color = 'bg-neutral-800', pinned, completed, dueDate, labels = [] }: CardProps) {
   const [isPinned, setIsPinned] = useState(pinned);
