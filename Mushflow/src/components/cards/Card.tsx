@@ -278,11 +278,11 @@ function Card({
           <div className="flex items-center gap-2">
             <button
               className={`opacity-0 group-hover:opacity-100 transition-opacity ease-in-out ${
-                isPinned ? "text-yellow-100" : "text-gray-400"
+                isPinned ? "text-stone-200" : "text-gray-400"
               }`}
               onClick={handlePinToggle}
             >
-              <Pin fill={isPinned ? "currentColor" : "none"} />
+              <Pin size={18} fill={isPinned ? "currentColor" : "none"} />
             </button>
             {isExpanded && (
               <>

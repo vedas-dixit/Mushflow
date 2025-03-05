@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect } from 'react';
-import { Search, Settings, LayoutGrid, LogIn, LogOut } from 'lucide-react';
+import { Search, Settings, LayoutGrid, LogIn, LogOut, Music } from 'lucide-react';
 import { LightbulbIcon, Bell, PencilLine, Archive, Trash } from 'lucide-react';
 import { useSession, signIn, signOut } from 'next-auth/react';
 
@@ -99,8 +99,8 @@ function HeaderComponent() {
 
                         <li>
                             <button className="flex items-center w-full px-3  py-3 hover:bg-gray-700 rounded-r-full">
-                                <Bell className="w-5 h-5 min-w-[20px]" />
-                                <span className="ml-4 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300">Reminders</span>
+                                <Music className="w-5 h-5 min-w-[20px]" />
+                                <span className="ml-4 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300">JAM Mode</span>
                             </button>
                         </li>
 
