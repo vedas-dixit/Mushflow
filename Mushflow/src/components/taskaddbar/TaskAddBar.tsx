@@ -1,6 +1,6 @@
 "use client"
 import React, { useState, useRef, useEffect } from 'react';
-import { Image, Undo, Redo, X, Pin, Calendar, Tag, Flag } from 'lucide-react';
+import { Image, Undo, Redo, X, Pin, Calendar, Tag, Flag, Paperclip } from 'lucide-react';
 import { PlaceholderText } from '@/utils/usePlaceholdertext';
 import { useHistory, createDebouncedSave, HistoryState } from '@/utils/useHandleAddHistory';
 import ModernDatePicker from '../datepickercomponent/DatePickerComponent';
@@ -109,6 +109,7 @@ function TaskAddBar() {
 
   const handleClickOutside = async (event: MouseEvent) => {
     if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      // If clicking outside, save any content before closing
       await handleClose();
     }
     
@@ -131,7 +132,7 @@ function TaskAddBar() {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isExpanded]);
+  }, [isExpanded, title, note]); // Add dependencies to ensure the latest state is used
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     adjustTextareaHeight();
@@ -177,7 +178,7 @@ function TaskAddBar() {
     }
   };
 
-  // Add keyboard shortcuts for undo/redo
+  // Add keyboard shortcuts for undo/redo and escape to close
   useEffect(() => {
     const handleKeyboardShortcut = (e: KeyboardEvent) => {
       if (isExpanded) {
@@ -187,6 +188,10 @@ function TaskAddBar() {
         } else if ((e.ctrlKey && e.key === 'y') || (e.ctrlKey && e.shiftKey && e.key === 'z')) {
           e.preventDefault();
           handleRedo();
+        } else if (e.key === 'Escape') {
+          // Save and close when Escape is pressed
+          e.preventDefault();
+          handleClose();
         }
       }
     };
@@ -196,44 +201,12 @@ function TaskAddBar() {
   }, [isExpanded]);
 
   const handleClose = async () => {
-    // Only attempt to save if the card was expanded and has content
-    if (isExpanded && !isSaving && (title.trim() || note.trim())) {
-      try {
-        setIsSaving(true);
-        
-        // Get the current user ID from the session
-        const userId = getUserId();
-        await saveTask({
-          userId,
-          title,
-          content: note,
-          priority,
-          labels,
-          dueDate: dueDate ? dueDate.toISOString() : null,
-          pinned: isPinned,
-          completed: false,
-        });
-        
-        // Refresh the page to show the new task
-        // router.refresh();
-        
-      } catch (error) {
-        console.error("Error saving task:", error);
-        // Optionally show an error notification to the user
-      } finally {
-        setIsSaving(false);
-        // Reset the form regardless of save success/failure
-        setIsExpanded(false);
-        setTitle('');
-        setNote('');
-        setDueDate(null);
-        setPriority('low');
-        setLabels([]);
-        setIsPinned(false);
-        resetHistory();
-      }
+    // If there's content, save the task
+    if ((title.trim() || note.trim()) && !isSaving) {
+      // Call the save function
+      await handleSaveTask();
     } else {
-      // If not expanded or already saving, just reset the form
+      // If no content or already saving, just reset the form
       setIsExpanded(false);
       setTitle('');
       setNote('');
@@ -366,44 +339,25 @@ function TaskAddBar() {
 
   // Handle saving the task
   const handleSaveTask = async () => {
-    if (isExpanded && title.trim() && !isSaving) {
+    // Save if there's any content (title or note)
+    if ((title.trim() || note.trim()) && !isSaving) {
       setIsSaving(true);
-      try {
-        // Get the current user ID from the session
-        const userId = getUserId();
-        const savedTask = await saveTask({
-          userId,
-          title,
-          content: note,
-          priority,
-          labels,
-          dueDate: dueDate ? dueDate.toISOString() : null,
-          pinned: isPinned,
-          completed: false,
-        });
-        
-        console.log('Task saved successfully:', savedTask);
-        
-        // Force a hard refresh to reload the page and fetch new data
-        // window.location.href = window.location.pathname;
-        
-      } catch (error) {
-        console.error("Error saving task:", error);
-        // Optionally show an error notification to the user
-      } finally {
-        setIsSaving(false);
-        // Reset the form regardless of save success/failure
-        setIsExpanded(false);
-        setTitle('');
-        setNote('');
-        setDueDate(null);
-        setPriority('low');
-        setLabels([]);
-        setIsPinned(false);
-        resetHistory();
-      }
-    } else {
-      // If not expanded or already saving, just reset the form
+      
+      // Create the task object
+      const userId = getUserId();
+      const newTask = {
+        userId,
+        title: title.trim() || 'Untitled', // Use 'Untitled' if no title is provided
+        content: note,
+        priority,
+        labels,
+        dueDate: dueDate ? dueDate.toISOString() : null,
+        pinned: isPinned,
+        completed: false,
+      };
+      
+      // Immediately reset the form to give instant feedback to the user
+      // This creates the perception of immediate task creation
       setIsExpanded(false);
       setTitle('');
       setNote('');
@@ -412,6 +366,35 @@ function TaskAddBar() {
       setLabels([]);
       setIsPinned(false);
       resetHistory();
+      
+      try {
+        // Perform the actual save operation in the background
+        const savedTask = await saveTask(newTask);
+        console.log('Task saved successfully:', savedTask);
+        
+        // Refresh the page in the background to show the new task
+        // This happens after the UI is already reset, so the user doesn't perceive any delay
+        router.refresh();
+      } catch (error) {
+        console.error("Error saving task:", error);
+        // Even if there's an error, we don't revert the UI since that would be jarring
+        // Instead, we could show a non-intrusive notification
+        // You could add a toast notification library here
+      } finally {
+        setIsSaving(false);
+      }
+      return true; // Return true to indicate successful save
+    } else {
+      // If already saving, do nothing
+      if (isSaving) {
+        console.log('Already saving, ignoring request');
+        return false;
+      }
+      
+      // If no content, just close without saving
+      console.log('No content to save');
+      setIsExpanded(false);
+      return false;
     }
   };
 
@@ -456,7 +439,7 @@ function TaskAddBar() {
           />
           {!isExpanded && (
             <button className="text-gray-400 hover:text-gray-300 ml-2">
-              <Image size={20} />
+              <Paperclip size={18}/>
             </button>
           )}
         </div>
@@ -604,7 +587,7 @@ function TaskAddBar() {
               </div>
               
               <button className="p-2 hover:bg-neutral-700 rounded-full">
-                <Image size={18} />
+                <Paperclip size={18}/>
               </button>
               
               {/* Pin Button */}
@@ -635,11 +618,11 @@ function TaskAddBar() {
             </div>
             <div className="flex space-x-2">
               <button
-                onClick={handleSaveTask}
+                onClick={handleClose}
                 className="px-4 py-1 text-sm text-gray-300 hover:bg-neutral-700 rounded-md"
                 disabled={isSaving}
               >
-                {isSaving ? 'Saving...' : 'Close'}
+                Close
               </button>
             </div>
           </div>

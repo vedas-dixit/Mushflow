@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState, useRef } from "react";
-import { Pin, CheckCircle, Calendar, X, Flag, Tag, Plus, Trash2 } from "lucide-react";
+import { Pin, CheckCircle, Calendar, X, Flag, Tag, Plus, Trash2, CheckCircle2 } from "lucide-react";
 import { format } from "date-fns";
 import { Task, TaskPriority } from "@/types/Task";
 import { predefinedLabels } from "@/utils/predefinedLabels";
@@ -398,8 +398,8 @@ function Card({
             }`}
             onClick={handleCompletionToggle}
           >
-            <CheckCircle fill={isCompleted ? "currentColor" : "none"} />
-            <span className="text-sm">{isCompleted ? "Completed" : "Mark as Done"}</span>
+            <CheckCircle2 fill={isCompleted ? "currentColor" : "none"} size={15}/>
+            <span className="text-[12px]">{isCompleted ? "Completed" : "Mark as Done"}</span>
           </button>
 
           <div className="relative">
