@@ -54,6 +54,8 @@ function Card({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const datePickerRef = useRef<HTMLDivElement>(null);
   const priorityMenuRef = useRef<HTMLDivElement>(null);
+  const [isTruncated, setIsTruncated] = useState(true);
+  const MAX_CONTENT_LINES = 6;
 
   useEffect(() => {
     if (isExpanded) {
@@ -246,6 +248,19 @@ function Card({
     }
   };
 
+  // Function to truncate content for display
+  const getTruncatedContent = () => {
+    if (!Array.isArray(editedContent)) {
+      return editedContent;
+    }
+    
+    if (isTruncated && editedContent.length > MAX_CONTENT_LINES) {
+      return editedContent.slice(0, MAX_CONTENT_LINES);
+    }
+    
+    return editedContent;
+  };
+
   return (
     <>
       {isExpanded && (
@@ -377,11 +392,18 @@ function Card({
           ) : (
             <div className="text-gray-300">
               {Array.isArray(editedContent) ? (
-                editedContent.map((item: string, index: number) => (
-                  <p key={index} className={`mb-1 ${isCompleted ? "line-through opacity-60" : ""}`}>
-                    • {item}
-                  </p>
-                ))
+                <>
+                  {getTruncatedContent().map((item: string, index: number) => (
+                    <p key={index} className={`mb-1 ${isCompleted ? "line-through opacity-60" : ""}`}>
+                      • {item}
+                    </p>
+                  ))}
+                  {isTruncated && editedContent.length > MAX_CONTENT_LINES && (
+                    <p className="text-gray-400 text-sm">
+                      ... {editedContent.length - MAX_CONTENT_LINES} more items
+                    </p>
+                  )}
+                </>
               ) : (
                 <p className={`mb-1 ${isCompleted ? "line-through opacity-60" : ""}`}>
                   • {editedContent}
