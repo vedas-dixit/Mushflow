@@ -1,12 +1,23 @@
 "use client";
 import React, { useEffect, useState, useRef } from "react";
-import { Pin, CheckCircle, Calendar, X, Flag, Tag, Plus, Trash2, CheckCircle2 } from "lucide-react";
+import { Pin, CheckCircle, Calendar, X, Flag, Tag, Plus, Trash2, CheckCircle2, Paperclip, Download, Eye, XCircle } from "lucide-react";
 import { format } from "date-fns";
 import { Task, TaskPriority } from "@/types/Task";
 import { predefinedLabels } from "@/utils/predefinedLabels";
 import { updateTask, deleteTask } from "@/utils/taskService";
 import { useSession } from "next-auth/react";
 import ModernDatePicker from "../datepickercomponent/DatePickerComponent";
+
+// Define a simple Attachment type
+interface Attachment {
+  id: string;
+  taskId: string;
+  filename: string;
+  url: string;
+  contentType: string;
+  size: number;
+  key: string; // Store the S3 key for deletion
+}
 
 interface CardProps {
   id: string;
@@ -19,12 +30,10 @@ interface CardProps {
   completed: boolean;
   dueDate: string | null;
   labels?: string[];
+  attachments?: Attachment[];
   onUpdate?: (updatedTask: Task) => void;
   onDelete?: (taskId: string) => void;
 }
-
-// Predefined labels (should match those in TaskAddBar)
-
 
 function Card({ 
   id, 
@@ -37,6 +46,7 @@ function Card({
   completed, 
   dueDate, 
   labels = [],
+  attachments = [],
   onUpdate,
   onDelete
 }: CardProps) {
@@ -50,10 +60,13 @@ function Card({
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [taskDueDate, setTaskDueDate] = useState<Date | null>(dueDate ? new Date(dueDate) : null);
   const [showPriorityMenu, setShowPriorityMenu] = useState(false);
+  const [taskAttachments, setTaskAttachments] = useState<Attachment[]>(attachments || []);
+  const [isUploading, setIsUploading] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const datePickerRef = useRef<HTMLDivElement>(null);
   const priorityMenuRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isTruncated, setIsTruncated] = useState(true);
   const MAX_CONTENT_LINES = 6;
 
@@ -70,6 +83,13 @@ function Card({
       document.body.style.overflow = 'unset';
     };
   }, [isExpanded]);
+
+  // Update attachments when props change
+  // useEffect(() => {
+  //   if (attachments) {
+  //     setTaskAttachments(attachments);
+  //   }
+  // }, [attachments]);
 
   const adjustTextareaHeight = () => {
     const textarea = textareaRef.current;
@@ -261,6 +281,117 @@ function Card({
     return editedContent;
   };
 
+  // Handle file upload
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    
+    const files = Array.from(e.target.files);
+    setIsUploading(true);
+    
+    try {
+      const formData = new FormData();
+      formData.append('taskId', id);
+      
+      files.forEach(file => {
+        formData.append('files', file);
+      });
+      
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to upload files');
+      }
+      
+      const data = await response.json();
+      const newAttachments = [...taskAttachments, ...data.attachments];
+      setTaskAttachments(newAttachments);
+      
+      // Update the task with new attachments
+      updateTaskField('attachments', newAttachments);
+      
+    } catch (error) {
+      console.error('Error uploading files:', error);
+      alert('Failed to upload files. Please try again.');
+    } finally {
+      setIsUploading(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+  
+  // Handle file deletion
+  const handleDeleteAttachment = async (attachment: Attachment) => {
+    try {
+      const response = await fetch(`/api/upload/${attachment.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ key: attachment.key }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete file');
+      }
+      
+      const updatedAttachments = taskAttachments.filter(att => att.id !== attachment.id);
+      setTaskAttachments(updatedAttachments);
+      
+      // Update the task with new attachments
+      updateTaskField('attachments', updatedAttachments);
+      
+    } catch (error) {
+      console.error('Error deleting file:', error);
+      alert('Failed to delete file. Please try again.');
+    }
+  };
+  
+  // Format file size
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  };
+  
+  // Get file icon based on content type
+  const getFileIcon = (contentType: string) => {
+    if (contentType.startsWith('image/')) return '🖼️';
+    if (contentType.startsWith('video/')) return '🎬';
+    if (contentType.startsWith('audio/')) return '🎵';
+    if (contentType.includes('pdf')) return '📄';
+    if (contentType.includes('word') || contentType.includes('document')) return '📝';
+    if (contentType.includes('excel') || contentType.includes('spreadsheet')) return '📊';
+    if (contentType.includes('presentation') || contentType.includes('powerpoint')) return '📽️';
+    return '📎';
+  };
+  
+  // Preview file
+  const previewFile = (url: string, contentType: string) => {
+    if (contentType.startsWith('image/')) {
+      window.open(url, '_blank');
+    } else if (contentType.startsWith('video/') || contentType.startsWith('audio/') || contentType.includes('pdf')) {
+      window.open(url, '_blank');
+    } else {
+      // For other file types, just download
+      downloadFile(url);
+    }
+  };
+  
+  // Download file
+  const downloadFile = (url: string) => {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = '';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
   return (
     <>
       {isExpanded && (
@@ -292,7 +423,7 @@ function Card({
 
           <div className="flex items-center gap-2">
             <button
-              className={`opacity-0 group-hover:opacity-100 ${isExpanded ? "opacity-100" : "opacity-0"} transition-opacity ease-in-out ${
+              className={`opacity-0 group-hover:opacity-100 transition-opacity ease-in-out ${
                 isPinned ? "text-stone-200" : "text-gray-400"
               }`}
               onClick={handlePinToggle}
@@ -413,6 +544,77 @@ function Card({
           )}
         </div>
 
+        {/* Attachments Section */}
+        {(taskAttachments.length > 0 || isExpanded) && (
+          <div className="mt-3 border-t border-gray-700 pt-2">
+            {taskAttachments.length > 0 && (
+              <div className="mb-2">
+                <h4 className="text-sm text-gray-400 mb-1">Attachments</h4>
+                <div className="space-y-2">
+                  {taskAttachments.map(attachment => (
+                    <div 
+                      key={attachment.id} 
+                      className="flex items-center justify-between bg-gray-700 bg-opacity-30 rounded-md p-2 text-sm"
+                    >
+                      <div className="flex items-center space-x-2 overflow-hidden">
+                        <span className="text-lg">{getFileIcon(attachment.contentType)}</span>
+                        <span className="truncate max-w-[150px]">{attachment.filename}</span>
+                        <span className="text-xs text-gray-400">{formatFileSize(attachment.size)}</span>
+                      </div>
+                      
+                      <div className="flex space-x-1">
+                        <button 
+                          onClick={() => previewFile(attachment.url, attachment.contentType)}
+                          className="p-1 text-gray-400 hover:text-blue-400"
+                          title="Preview"
+                        >
+                          <Eye size={16} />
+                        </button>
+                        <button 
+                          onClick={() => downloadFile(attachment.url)}
+                          className="p-1 text-gray-400 hover:text-green-400"
+                          title="Download"
+                        >
+                          <Download size={16} />
+                        </button>
+                        {isExpanded && (
+                          <button 
+                            onClick={() => handleDeleteAttachment(attachment)}
+                            className="p-1 text-gray-400 hover:text-red-400"
+                            title="Delete"
+                          >
+                            <XCircle size={16} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {isExpanded && (
+              <div>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  multiple
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center text-sm text-gray-400 hover:text-gray-200"
+                  disabled={isUploading}
+                >
+                  <Paperclip size={16} className="mr-1" />
+                  {isUploading ? 'Uploading...' : 'Attach files'}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="flex justify-between items-center mt-4">
           <button
             className={`flex items-center gap-1 ${
@@ -435,14 +637,14 @@ function Card({
               </button>
             ) : (
               <button
-                className={`flex items-center gap-1 text-gray-400 text-sm opacity-0 group-hover:opacity-100 ${isExpanded ? "opacity-100" : "opacity-0"} transition-opacity ease-in-out hover:text-gray-200`}
+                className="flex items-center gap-1 text-gray-400 text-sm opacity-0 group-hover:opacity-100 transition-opacity ease-in-out hover:text-gray-200"
                 onClick={toggleDatePicker}
               >
                 <Calendar size={14} className="flex-shrink-0" />
                 <span className="text-sm">Add date</span>
               </button>
             )}
-            
+         
             {showDatePicker && (
               <div 
                 ref={datePickerRef}

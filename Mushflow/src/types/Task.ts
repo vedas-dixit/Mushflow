@@ -13,15 +13,16 @@ export interface Task {
   
   // Task metadata
   priority: "low" | "medium" | "high";
+  color?: string;
   labels: string[];
   dueDate: string | null;
   reminders: string[];
-  attachments: string[];
+  attachments?: Attachment[];
   recurring: string | null;
   
   // Timestamps
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
   
   // Status flags
   pinned: boolean;
@@ -42,7 +43,7 @@ export interface CreateTaskInput {
   completed?: boolean;
 }
 
-export type TaskPriority = "low" | "medium" | "high";
+export type TaskPriority = 'low' | 'medium' | 'high';
 
 export interface Label {
   id: string;
@@ -51,4 +52,12 @@ export interface Label {
   icon?: string;
   userId: string;
   isSystem: boolean;
+}
+
+export interface Attachment {
+  id: string;
+  filename: string;
+  url: string;
+  contentType: string;
+  size: number;
 } 

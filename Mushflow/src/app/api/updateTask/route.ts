@@ -73,6 +73,12 @@ export async function PUT(request: Request) {
       expressionAttributeValues[':completed'] = body.completed;
     }
     
+    // Handle attachments update
+    if (body.attachments !== undefined) {
+      updateExpression += ', attachments = :attachments';
+      expressionAttributeValues[':attachments'] = body.attachments;
+    }
+    
     // Handle due date update and GSI1SK update
     if (body.dueDate !== undefined) {
       updateExpression += ', dueDate = :dueDate, GSI1SK = :gsi1sk';
