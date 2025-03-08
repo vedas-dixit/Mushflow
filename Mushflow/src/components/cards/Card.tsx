@@ -660,8 +660,14 @@ function Card({
             {isExpanded && showDatePicker && (
               <div 
                 ref={datePickerRef}
-                className="absolute bottom-full right-0 z-50"
+                className="absolute bottom-0 right-0 transform translate-y-full mt-2 z-50"
                 onClick={(e) => e.stopPropagation()}
+                style={{
+                  // Position above the button with some spacing
+                  bottom:"26px",
+                  left: -9,
+                  maxWidth: "300px"
+                }}
               >
                 <ModernDatePicker 
                   selectedDate={taskDueDate} 

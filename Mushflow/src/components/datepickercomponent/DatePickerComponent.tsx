@@ -50,7 +50,7 @@ const ModernDatePicker: React.FC<ModernDatePickerProps> = ({
         onClick={() => setIsOpen(!isOpen)}
         type="button"
       >
-        <Calendar size={18} />
+        <Calendar size={15} />
       </button>
       
       {/* Calendar dropdown - Add higher z-index and fixed positioning */}
