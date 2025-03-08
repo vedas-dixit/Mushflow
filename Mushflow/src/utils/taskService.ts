@@ -29,23 +29,6 @@ export async function saveTask(taskData: CreateTaskInput): Promise<Task> {
     // For development with mock data, create a fake successful response
     if (process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost') {
       console.log('Creating mock task response for development');
-      const mockTask: Task = {
-        id: `mock-${Date.now()}`,
-        userId: taskData.userId,
-        title: taskData.title,
-        content: taskData.content || '',
-        priority: taskData.priority || 'medium',
-        labels: taskData.labels || [],
-        dueDate: taskData.dueDate || null,
-        reminders: taskData.reminders || [],
-        attachments: taskData.attachments || [],
-        recurring: taskData.recurring || null,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        pinned: taskData.pinned || false,
-        completed: taskData.completed || false,
-      };
-      return mockTask;
     }
     throw error;
   }

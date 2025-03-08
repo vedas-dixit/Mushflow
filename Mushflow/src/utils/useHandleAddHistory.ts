@@ -16,9 +16,10 @@ export interface HistoryState {
   title: string;
   note: string;
   dueDate: Date | null;
-  priority: TaskPriority;
-  labels: string[];
-  isPinned: boolean;
+  priority?: TaskPriority;
+  labels?: string[];
+  isPinned?: boolean;
+  pendingFiles?: File[];
 }
 
 export interface UseHistoryResult {

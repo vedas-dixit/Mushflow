@@ -545,7 +545,7 @@ function Card({
                 <>
                   {getTruncatedContent().map((item: string, index: number) => (
                     <p key={index} className={`mb-1 ${isCompleted ? "line-through opacity-60" : ""}`}>
-                      • {item}
+                      {item}
                     </p>
                   ))}
                   {isTruncated && editedContent.length > MAX_CONTENT_LINES && (
