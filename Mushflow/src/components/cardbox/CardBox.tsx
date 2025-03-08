@@ -75,6 +75,7 @@ function CardBox({ tasks: initialTasks }: CardBoxProps) {
                 labels={task.labels}
                 onUpdate={handleTaskUpdate}
                 onDelete={handleTaskDelete}
+                attachments={task.attachments}
               />
             </div>
           );

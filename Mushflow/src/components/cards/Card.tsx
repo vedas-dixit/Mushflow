@@ -69,6 +69,13 @@ function Card({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isTruncated, setIsTruncated] = useState(true);
   const MAX_CONTENT_LINES = 6;
+  const [datePickerPosition, setDatePickerPosition] = useState({ top: 0, left: 0 });
+  const dateButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Debug initial attachments
+  useEffect(() => {
+    console.log('Initial attachments prop:', attachments);
+  }, []);
 
   useEffect(() => {
     if (isExpanded) {
@@ -84,12 +91,13 @@ function Card({
     };
   }, [isExpanded]);
 
-  // Update attachments when props change
-  // useEffect(() => {
-  //   if (attachments) {
-  //     setTaskAttachments(attachments);
-  //   }
-  // }, [attachments]);
+  // Update attachments when props change - CRITICAL for refresh behavior
+  useEffect(() => {
+    if (attachments && attachments.length > 0) {
+      console.log('Updating attachments from props:', attachments);
+      setTaskAttachments(attachments);
+    }
+  }, [attachments]);
 
   const adjustTextareaHeight = () => {
     const textarea = textareaRef.current;

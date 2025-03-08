@@ -56,8 +56,10 @@ export interface Label {
 
 export interface Attachment {
   id: string;
+  taskId: string;
   filename: string;
   url: string;
   contentType: string;
   size: number;
+  key: string;
 } 

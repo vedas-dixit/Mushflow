@@ -13,7 +13,6 @@ export default async function Home() {
     console.log(`Fetching tasks for user: ${userId}`);
     const tasks = await getTasks(userId);
     console.log(`Successfully fetched ${tasks.length} tasks`);
-    
     return <HomePage tasks={tasks} />;
   } catch (error) {
     console.error("Error in Home page:", error);
