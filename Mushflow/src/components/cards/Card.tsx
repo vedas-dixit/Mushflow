@@ -226,7 +226,18 @@ function Card({
   // Toggle date picker
   const toggleDatePicker = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setShowDatePicker(!showDatePicker);
+    
+    // Only toggle date picker if card is expanded
+    if (isExpanded) {
+      setShowDatePicker(!showDatePicker);
+    } else {
+      // If card is not expanded, expand it first
+      setIsExpanded(true);
+      // Set a small delay before showing date picker to ensure card is expanded
+      setTimeout(() => {
+        setShowDatePicker(true);
+      }, 100);
+    }
   };
 
   // Toggle priority menu
@@ -637,7 +648,7 @@ function Card({
               </button>
             ) : (
               <button
-                className="flex items-center gap-1 text-gray-400 text-sm opacity-0 group-hover:opacity-100 transition-opacity ease-in-out hover:text-gray-200"
+                className="flex items-center gap-1 text-gray-400 text-sm  transition-opacity ease-in-out hover:text-gray-200"
                 onClick={toggleDatePicker}
               >
                 <Calendar size={14} className="flex-shrink-0" />
@@ -645,7 +656,8 @@ function Card({
               </button>
             )}
          
-            {showDatePicker && (
+            {/* Only show date picker when card is expanded */}
+            {isExpanded && showDatePicker && (
               <div 
                 ref={datePickerRef}
                 className="absolute bottom-full right-0 z-50"
