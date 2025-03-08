@@ -271,7 +271,7 @@ function Card({
         className={`${
           isExpanded
             ? "fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl z-50"
-            : "relative"
+            : "relative min-w-[240px] min-h-[120px] h-full"
         } ${color} rounded-lg border border-gray-600 transition-all duration-200 group p-4`}
         onClick={() => !isExpanded && setIsExpanded(true)}
       >
@@ -292,7 +292,7 @@ function Card({
 
           <div className="flex items-center gap-2">
             <button
-              className={`opacity-0 group-hover:opacity-100 transition-opacity ease-in-out ${
+              className={`opacity-0 group-hover:opacity-100 ${isExpanded ? "opacity-100" : "opacity-0"} transition-opacity ease-in-out ${
                 isPinned ? "text-stone-200" : "text-gray-400"
               }`}
               onClick={handlePinToggle}
@@ -380,7 +380,7 @@ function Card({
           </div>
         )}
 
-        <div className="mt-2">
+        <div className="mt-2 flex-grow">
           {isExpanded ? (
             <textarea
               ref={textareaRef}
@@ -424,30 +424,29 @@ function Card({
             <span className="text-[12px]">{isCompleted ? "Completed" : "Mark as Done"}</span>
           </button>
 
-          <div className="relative">
+          <div className="relative flex items-center">
             {taskDueDate ? (
               <button 
-                className="flex items-center gap-1 text-gray-400 text-sm opacity-0 group-hover:opacity-100 transition-opacity ease-in-out hover:text-gray-200"
+                className="flex items-center gap-1 text-gray-400 text-sm hover:text-gray-200"
                 onClick={toggleDatePicker}
               >
-                <Calendar size={14} />
+                <Calendar size={14} className="flex-shrink-0" />
                 <span className="text-sm">{format(taskDueDate, "dd MMM, yyyy")}</span>
               </button>
             ) : (
-              <button 
-                className="flex items-center gap-1 text-gray-400 text-sm opacity-0 group-hover:opacity-100 transition-opacity ease-in-out hover:text-gray-200"
+              <button
+                className={`flex items-center gap-1 text-gray-400 text-sm opacity-0 group-hover:opacity-100 ${isExpanded ? "opacity-100" : "opacity-0"} transition-opacity ease-in-out hover:text-gray-200`}
                 onClick={toggleDatePicker}
               >
-                <Calendar size={14} />
-                <Plus size={14} />
-                <span className="text-sm">Add due date</span>
+                <Calendar size={14} className="flex-shrink-0" />
+                <span className="text-sm">Add date</span>
               </button>
             )}
             
             {showDatePicker && (
               <div 
                 ref={datePickerRef}
-                className="absolute bottom-full right-0 mb-2 z-50"
+                className="absolute bottom-full right-0 z-50"
                 onClick={(e) => e.stopPropagation()}
               >
                 <ModernDatePicker 

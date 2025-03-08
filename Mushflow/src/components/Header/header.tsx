@@ -123,11 +123,15 @@ const HeaderWithContext = () => {
                                 <button 
                                     className="ml-2 relative group"
                                     onClick={() => signOut()}
-                                >
+                               >
                                     <img
                                         src={session.user.image}
                                         alt={session.user.name || "Profile"}
                                         className="w-8 h-8 rounded-full"
+                                        onError={(e) => {
+                                            console.log("Image failed to load:", session.user.image);
+                                            e.currentTarget.src = "/default-avatar.png"; // Fallback image
+                                        }}
                                     />
                                     <div className="absolute right-0 top-full mt-1 w-32 bg-white shadow-lg rounded-md p-2 hidden group-hover:block">
                                         <div className="text-sm text-gray-800 font-medium mb-1">{session.user.name}</div>
