@@ -66,7 +66,7 @@ function CardBox({ tasks: initialTasks, onTaskUpdate, onTaskDelete }: CardBoxPro
     </div> 
     : 
     <div className="w-full h-full px-4 md:pl-16 mt-28 flex justify-center">
-      <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-5 space-y-5">
+      <div className="w-full columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
         {tasks.map((task) => {
           // Ensure task has an ID and userId
           if (!task.id) {
@@ -83,7 +83,7 @@ function CardBox({ tasks: initialTasks, onTaskUpdate, onTaskDelete }: CardBoxPro
           }
           
           return (
-            <div key={task.id} className="break-inside-avoid">
+            <div key={task.id} className="break-inside-avoid mb-4">
               <Card
                 id={task.id}
                 userId={taskUserId}

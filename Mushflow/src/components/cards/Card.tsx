@@ -421,8 +421,8 @@ function Card({
         className={`${
           isExpanded
             ? "fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl z-50"
-            : "relative min-w-[240px] min-h-[120px] h-full"
-        } ${color} rounded-lg border border-gray-600 transition-all duration-200 group p-4`}
+            : "relative w-full break-inside-avoid"
+        } ${color} rounded-lg border border-gray-600 transition-all duration-200 group p-3`}
         onClick={() => !isExpanded && setIsExpanded(true)}
       >
         <div className="flex justify-between items-start">
@@ -435,19 +435,19 @@ function Card({
               placeholder="Title"
             />
           ) : (
-            <h3 className={`font-medium text-lg text-gray-100 ${isCompleted ? "line-through opacity-60" : ""}`}>
+            <h3 className={`font-medium text-lg text-gray-100 ${isCompleted ? "line-through opacity-60" : ""} truncate`}>
               {editedTitle}
             </h3>
           )}
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 flex-shrink-0">
             <button
               className={`opacity-0 group-hover:opacity-100 transition-opacity ease-in-out ${
                 isPinned ? "text-stone-200" : "text-gray-400"
               }`}
               onClick={handlePinToggle}
             >
-              <Pin size={18} fill={isPinned ? "currentColor" : "none"} />
+              <Pin size={16} fill={isPinned ? "currentColor" : "none"} />
             </button>
             {isExpanded && (
               <>
@@ -455,13 +455,13 @@ function Card({
                   className="text-gray-400 hover:text-red-400"
                   onClick={handleDeleteTask}
                 >
-                  <Trash2 size={18} />
+                  <Trash2 size={16} />
                 </button>
                 <button
                   className="text-gray-400 hover:text-gray-200"
                   onClick={handleClose}
                 >
-                  <X size={20} />
+                  <X size={18} />
                 </button>
               </>
             )}
@@ -469,14 +469,14 @@ function Card({
         </div>
 
         {/* Priority indicator with dropdown */}
-        <div className="flex items-center mt-2 mb-3 relative">
+        <div className="flex items-center mt-1 mb-2 relative">
           <button 
             onClick={togglePriorityMenu}
-            className="flex items-center hover:bg-gray-700 rounded px-2 py-1"
+            className="flex items-center hover:bg-gray-700 rounded px-1.5 py-0.5"
           >
-            <Flag size={14} className={`${getPriorityColor(taskPriority)} mr-1`} />
+            <Flag size={12} className={`${getPriorityColor(taskPriority)} mr-1`} />
             <span className={`text-xs ${getPriorityColor(taskPriority)}`}>
-              {taskPriority.charAt(0).toUpperCase() + taskPriority.slice(1)} Priority
+              {taskPriority.charAt(0).toUpperCase() + taskPriority.slice(1)}
             </span>
           </button>
           
@@ -514,13 +514,13 @@ function Card({
 
         {/* Labels */}
         {labels.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-3">
+          <div className="flex flex-wrap gap-1 mb-2">
             {labels.map(labelId => {
               const label = predefinedLabels.find(l => l.id === labelId) || { id: labelId, name: labelId, color: '#9E9E9E' };
               return (
                 <div 
                   key={label.id} 
-                  className="flex items-center bg-opacity-20 rounded px-2 py-0.5 text-xs"
+                  className="flex items-center bg-opacity-20 rounded px-1.5 py-0.5 text-xs"
                   style={{ backgroundColor: `${label.color}40`, color: label.color }}
                 >
                   {label.name}
@@ -530,7 +530,7 @@ function Card({
           </div>
         )}
 
-        <div className="mt-2 flex-grow">
+        <div className="mt-1 flex-grow">
           {isExpanded ? (
             <textarea
               ref={textareaRef}
@@ -540,22 +540,22 @@ function Card({
               placeholder="Add note content..."
             />
           ) : (
-            <div className="text-gray-300">
+            <div className="text-gray-300 text-sm">
               {Array.isArray(editedContent) ? (
                 <>
                   {getTruncatedContent().map((item: string, index: number) => (
-                    <p key={index} className={`mb-1 ${isCompleted ? "line-through opacity-60" : ""}`}>
+                    <p key={index} className={`mb-0.5 ${isCompleted ? "line-through opacity-60" : ""}`}>
                       {item}
                     </p>
                   ))}
                   {isTruncated && editedContent.length > MAX_CONTENT_LINES && (
-                    <p className="text-gray-400 text-sm">
+                    <p className="text-gray-400 text-xs">
                       ... {editedContent.length - MAX_CONTENT_LINES} more items
                     </p>
                   )}
                 </>
               ) : (
-                <p className={`mb-1 ${isCompleted ? "line-through opacity-60" : ""}`}>
+                <p className={`mb-0.5 ${isCompleted ? "line-through opacity-60" : ""}`}>
                   • {editedContent}
                 </p>
               )}
@@ -565,44 +565,44 @@ function Card({
 
         {/* Attachments Section */}
         {(taskAttachments.length > 0 || isExpanded) && (
-          <div className="mt-3 border-t border-gray-700 pt-2">
+          <div className="mt-2 border-t border-gray-700 pt-2">
             {taskAttachments.length > 0 && (
-              <div className="mb-2">
-                <h4 className="text-sm text-gray-400 mb-1">Attachments</h4>
-                <div className="space-y-2">
+              <div className="mb-1">
+                <h4 className="text-xs text-gray-400 mb-1">Attachments</h4>
+                <div className="flex flex-wrap gap-1">
                   {taskAttachments.map(attachment => (
                     <div 
                       key={attachment.id} 
-                      className="flex items-center justify-between bg-gray-700 bg-opacity-30 rounded-md p-2 text-sm"
+                      className="flex items-center bg-gray-700 bg-opacity-30 rounded-md p-1 text-xs w-full"
                     >
-                      <div className="flex items-center space-x-2 overflow-hidden">
-                        <span className="text-lg">{getFileIcon(attachment.contentType)}</span>
-                        <span className="truncate max-w-[150px]">{attachment.filename}</span>
-                        <span className="text-xs text-gray-400">{formatFileSize(attachment.size)}</span>
+                      <div className="flex items-center space-x-1 overflow-hidden flex-1 min-w-0">
+                        <span className="text-base flex-shrink-0">{getFileIcon(attachment.contentType)}</span>
+                        <span className="truncate">{attachment.filename}</span>
+                        <span className="text-xs text-gray-400 flex-shrink-0">{formatFileSize(attachment.size)}</span>
                       </div>
                       
-                      <div className="flex space-x-1">
+                      <div className="flex space-x-1 flex-shrink-0 ml-1">
                         <button 
                           onClick={() => previewFile(attachment.url, attachment.contentType)}
-                          className="p-1 text-gray-400 hover:text-blue-400"
+                          className="p-0.5 text-gray-400 hover:text-blue-400"
                           title="Preview"
                         >
-                          <Eye size={16} />
+                          <Eye size={14} />
                         </button>
                         <button 
                           onClick={() => downloadFile(attachment.url)}
-                          className="p-1 text-gray-400 hover:text-green-400"
+                          className="p-0.5 text-gray-400 hover:text-green-400"
                           title="Download"
                         >
-                          <Download size={16} />
+                          <Download size={14} />
                         </button>
                         {isExpanded && (
                           <button 
                             onClick={() => handleDeleteAttachment(attachment)}
-                            className="p-1 text-gray-400 hover:text-red-400"
+                            className="p-0.5 text-gray-400 hover:text-red-400"
                             title="Delete"
                           >
-                            <XCircle size={16} />
+                            <Trash2 size={14} />
                           </button>
                         )}
                       </div>
@@ -634,36 +634,36 @@ function Card({
           </div>
         )}
 
-        <div className="flex justify-between items-center mt-4">
+        <div className="flex justify-between items-center mt-2">
           <button
             className={`flex items-center gap-1 ${
               isCompleted ? "text-green-400" : "text-gray-400"
             }`}
             onClick={handleCompletionToggle}
           >
-            <CheckCircle2 fill={isCompleted ? "currentColor" : "none"} size={15}/>
-            <span className="text-[12px]">{isCompleted ? "Completed" : "Mark as Done"}</span>
+            <CheckCircle2 fill={isCompleted ? "currentColor" : "none"} size={14}/>
+            <span className="text-[10px]">{isCompleted ? "Done" : "Mark Done"}</span>
           </button>
 
           <div className="relative flex items-center">
             {taskDueDate ? (
               <button 
-                className="flex items-center gap-1 text-gray-400 text-sm hover:text-gray-200"
                 onClick={toggleDatePicker}
+                className="flex items-center text-xs text-blue-400"
               >
-                <Calendar size={14} className="flex-shrink-0" />
-                <span className="text-sm">{format(taskDueDate, "dd MMM, yyyy")}</span>
+                <Calendar size={14} className="mr-1" />
+                {format(new Date(taskDueDate), 'MMM d')}
               </button>
             ) : (
-              <button
-                className="flex items-center gap-1 text-gray-400 text-sm  transition-opacity ease-in-out hover:text-gray-200"
+              <button 
                 onClick={toggleDatePicker}
+                className="flex items-center text-xs text-gray-400 hover:text-gray-200"
               >
-                <Calendar size={14} className="flex-shrink-0" />
-                <span className="text-sm">Add date</span>
+                <Calendar size={14} className="mr-1" />
+                Add date
               </button>
             )}
-         
+            
             {/* Only show date picker when card is expanded */}
             {isExpanded && showDatePicker && (
               <div 
@@ -671,7 +671,6 @@ function Card({
                 className="absolute bottom-0 right-0 transform translate-y-full mt-2 z-50"
                 onClick={(e) => e.stopPropagation()}
                 style={{
-                  // Position above the button with some spacing
                   bottom:"26px",
                   left: -9,
                   maxWidth: "300px"
