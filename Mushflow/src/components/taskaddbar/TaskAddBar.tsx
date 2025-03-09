@@ -8,8 +8,13 @@ import { saveTask } from '@/utils/taskService';
 import { TaskPriority } from '@/types/Task';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { Task } from '@/types/Task';
 
-function TaskAddBar() {
+interface TaskAddBarProps {
+  onTaskAdd?: (newTask: Task) => void;
+}
+
+function TaskAddBar({ onTaskAdd }: TaskAddBarProps) {
   const { data: session } = useSession();
   const router = useRouter();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -340,12 +345,18 @@ function TaskAddBar() {
   // Handle saving the task
   const handleSaveTask = async () => {
     // Save if there's any content (title or note)
-    if ((title.trim() || note.trim()) && !isSaving) {
-      setIsSaving(true);
-      
-      // Create the task object
+    if ((!title.trim() && !note.trim()) || isSaving) {
+      // If no content or already saving, just close without saving
+      setIsExpanded(false);
+      return;
+    }
+    
+    setIsSaving(true);
+    
+    try {
       const userId = getUserId();
-      const newTask = {
+      
+      const taskData = {
         userId,
         title: title.trim() || 'Untitled', // Use 'Untitled' if no title is provided
         content: note,
@@ -353,12 +364,18 @@ function TaskAddBar() {
         labels,
         dueDate: dueDate ? dueDate.toISOString() : null,
         pinned: isPinned,
-        completed: false,
+        completed: false
       };
       
-      // Immediately reset the form to give instant feedback to the user
-      // This creates the perception of immediate task creation
-      setIsExpanded(false);
+      const savedTask = await saveTask(taskData);
+      console.log('Task saved:', savedTask);
+      
+      // Notify parent component about the new task
+      if (onTaskAdd && savedTask) {
+        onTaskAdd(savedTask);
+      }
+      
+      // Reset form
       setTitle('');
       setNote('');
       setDueDate(null);
@@ -366,35 +383,14 @@ function TaskAddBar() {
       setLabels([]);
       setIsPinned(false);
       resetHistory();
-      
-      try {
-        // Perform the actual save operation in the background
-        const savedTask = await saveTask(newTask);
-        console.log('Task saved successfully:', savedTask);
-        
-        // Refresh the page in the background to show the new task
-        // This happens after the UI is already reset, so the user doesn't perceive any delay
-        router.refresh();
-      } catch (error) {
-        console.error("Error saving task:", error);
-        // Even if there's an error, we don't revert the UI since that would be jarring
-        // Instead, we could show a non-intrusive notification
-        // You could add a toast notification library here
-      } finally {
-        setIsSaving(false);
-      }
-      return true; // Return true to indicate successful save
-    } else {
-      // If already saving, do nothing
-      if (isSaving) {
-        console.log('Already saving, ignoring request');
-        return false;
-      }
-      
-      // If no content, just close without saving
-      console.log('No content to save');
       setIsExpanded(false);
-      return false;
+      
+      // Refresh the page to show the new task
+      router.refresh();
+    } catch (error) {
+      console.error('Error saving task:', error);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -622,7 +618,7 @@ function TaskAddBar() {
                 className="px-4 py-1 text-sm text-gray-300 hover:bg-neutral-700 rounded-md"
                 disabled={isSaving}
               >
-                Close
+                Save
               </button>
             </div>
           </div>

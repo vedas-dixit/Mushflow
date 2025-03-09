@@ -4,14 +4,18 @@ import Card from "../cards/Card";
 import { Task } from "@/types/Task";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { useHeader } from "../Header/header";
 
 interface CardBoxProps {
   tasks: Task[];
+  onTaskUpdate?: (updatedTask: Task) => void;
+  onTaskDelete?: (taskId: string) => void;
 }
 
-function CardBox({ tasks: initialTasks }: CardBoxProps) {
+function CardBox({ tasks: initialTasks, onTaskUpdate, onTaskDelete }: CardBoxProps) {
   const { data: session } = useSession();
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  const { activeNavId } = useHeader();
   
   // Update tasks when initialTasks changes
   useEffect(() => {
@@ -25,11 +29,21 @@ function CardBox({ tasks: initialTasks }: CardBoxProps) {
         task.id === updatedTask.id ? updatedTask : task
       )
     );
+    
+    // Notify parent component about the update
+    if (onTaskUpdate) {
+      onTaskUpdate(updatedTask);
+    }
   };
   
   // Handle task deletion
   const handleTaskDelete = (taskId: string) => {
     setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
+    
+    // Notify parent component about the deletion
+    if (onTaskDelete) {
+      onTaskDelete(taskId);
+    }
   };
   
   console.log(`Rendering ${tasks.length} tasks`);
@@ -37,10 +51,18 @@ function CardBox({ tasks: initialTasks }: CardBoxProps) {
   // Get the current user ID
   const userId = session?.user?.id || "";
   
+  // Display appropriate empty state message based on active navigation
+  const getEmptyStateMessage = () => {
+    if (activeNavId === 'pinned') {
+      return "No pinned tasks yet";
+    }
+    return "Add your first task";
+  };
+  
   return (
     !tasks.length ? 
-    <div className="w-full h-full flex justify-center items-center text-gray-400">
-      Add your first task
+    <div className="w-full h-full flex justify-center items-center text-gray-400 mt-28">
+      {getEmptyStateMessage()}
     </div> 
     : 
     <div className="w-full h-full pl-16 px-4 mt-28 flex justify-center">

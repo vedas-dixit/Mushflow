@@ -40,7 +40,7 @@ export const HeaderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const [navItems, setNavItems] = useState<NavItem[]>([
         { id: 'notes', icon: <LightbulbIcon className="w-5 h-5 min-w-[20px]" />, label: 'Notes', isActive: true },
         { id: 'jam', icon: <Music className="w-5 h-5 min-w-[20px]" />, label: 'JAM Mode' },
-        { id: 'trash', icon: <Trash className="w-5 h-5 min-w-[20px]" />, label: 'Trash' },
+        { id: 'pinned', icon: <Bell className="w-5 h-5 min-w-[20px]" />, label: 'Pinned' },
     ]);
     const [activeNavId, setActiveNavId] = useState<string | null>('notes');
     const [searchQuery, setSearchQuery] = useState('');
@@ -79,7 +79,8 @@ const HeaderWithContext = () => {
 
     const handleNavItemClick = (id: string) => {
         setActiveNavId(id);
-        // You can add additional logic here, like navigation
+        // You can add additional logic here for navigation if needed
+        console.log(`Navigated to ${id} view`);
     };
 
     return (
@@ -130,7 +131,7 @@ const HeaderWithContext = () => {
                                         className="w-8 h-8 rounded-full"
                                         onError={(e) => {
                                             console.log("Image failed to load:", session.user.image);
-                                            e.currentTarget.src = "/default-avatar.png"; // Fallback image
+                                            // e.currentTarget.src = "/default-avatar.png"; // Fallback image
                                         }}
                                     />
                                     <div className="absolute right-0 top-full mt-1 w-32 bg-white shadow-lg rounded-md p-2 hidden group-hover:block">
@@ -200,7 +201,7 @@ function HeaderComponent() {
     const [navItems, setNavItems] = useState<NavItem[]>([
         { id: 'notes', icon: <LightbulbIcon className="w-5 h-5 min-w-[20px]" />, label: 'Notes', isActive: true },
         { id: 'jam', icon: <Music className="w-5 h-5 min-w-[20px]" />, label: 'JAM Mode' },
-        { id: 'trash', icon: <Trash className="w-5 h-5 min-w-[20px]" />, label: 'Trash' },
+        { id: 'pinned', icon: <Bell className="w-5 h-5 min-w-[20px]" />, label: 'Pinned' },
     ]);
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -211,7 +212,8 @@ function HeaderComponent() {
                 isActive: item.id === id
             }))
         );
-        // You can add additional logic here, like navigation
+        // You can add additional logic here for navigation if needed
+        console.log(`Navigated to ${id} view`);
     };
 
     return (
