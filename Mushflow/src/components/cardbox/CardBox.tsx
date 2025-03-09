@@ -65,7 +65,7 @@ function CardBox({ tasks: initialTasks, onTaskUpdate, onTaskDelete }: CardBoxPro
       {getEmptyStateMessage()}
     </div> 
     : 
-    <div className="w-full h-full pl-16 px-4 mt-28 flex justify-center">
+    <div className="w-full h-full px-4 md:pl-16 mt-28 flex justify-center">
       <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-5 space-y-5">
         {tasks.map((task) => {
           // Ensure task has an ID and userId

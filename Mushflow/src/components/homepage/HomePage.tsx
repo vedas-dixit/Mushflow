@@ -53,7 +53,7 @@ function HomePage({ tasks: initialTasks }: HomePageProps) {
   };
 
   return (
-    <div className='min-h-screen bg-neutral-900'>
+    <div className='min-h-screen bg-neutral-900 pb-16 md:pb-0'>
       <DynamicHeader/>
       
       {activeNavId === 'notes' && (
@@ -76,14 +76,14 @@ function HomePage({ tasks: initialTasks }: HomePageProps) {
       )}
       
       {activeNavId === 'jam' && (
-        <div className="mt-16 pl-16">
+        <div className="mt-16 pl-4 md:pl-16">
           <Whiteboard/>
         </div>
       )}
 
       {/* Show Whiteboard in all views except JAM */}
       {activeNavId !== 'jam' && (
-        <div className="mt-16 pl-16">
+        <div className="mt-16 pl-4 md:pl-16">
           <Whiteboard/>
         </div>
       )}

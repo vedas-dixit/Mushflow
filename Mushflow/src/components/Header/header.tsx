@@ -167,7 +167,8 @@ const HeaderWithContext = () => {
                 </div>
             </div>
 
-            <div className="fixed top-0 left-0 h-screen bg-[#202124] text-gray-300 pt-16 w-12 hover:w-64 transition-all duration-300 group z-10">
+            {/* Desktop sidebar - hidden on mobile */}
+            <div className="fixed top-0 left-0 h-screen bg-[#202124] text-gray-300 pt-16 w-12 hover:w-64 transition-all duration-300 group z-10 hidden md:block">
                 <nav>
                     <ul className="space-y-1">
                         {navItems.map((item) => (
@@ -188,6 +189,26 @@ const HeaderWithContext = () => {
                             </li>
                         ))}
                     </ul>
+                </nav>
+            </div>
+
+            {/* Mobile bottom navigation - visible only on mobile */}
+            <div className="fixed bottom-0 left-0 right-0 bg-[#202124] text-gray-300 z-30 md:hidden">
+                <nav className="flex justify-around">
+                    {navItems.map((item) => (
+                        <button 
+                            key={item.id}
+                            className={`flex flex-col items-center justify-center py-3 px-4 w-full ${
+                                item.isActive 
+                                    ? 'text-white bg-[#41331C]' 
+                                    : 'hover:bg-gray-700'
+                            }`}
+                            onClick={() => handleNavItemClick(item.id)}
+                        >
+                            {item.icon}
+                            <span className="text-xs mt-1">{item.label}</span>
+                        </button>
+                    ))}
                 </nav>
             </div>
         </>
@@ -296,7 +317,8 @@ function HeaderComponent() {
                 </div>
             </div>
 
-            <div className="fixed top-0 left-0 h-screen bg-[#202124] text-gray-300 pt-16 w-12 hover:w-64 transition-all duration-300 group z-10">
+            {/* Desktop sidebar - hidden on mobile */}
+            <div className="fixed top-0 left-0 h-screen bg-[#202124] text-gray-300 pt-16 w-12 hover:w-64 transition-all duration-300 group z-10 hidden md:block">
                 <nav>
                     <ul className="space-y-1">
                         {navItems.map((item) => (
@@ -317,6 +339,26 @@ function HeaderComponent() {
                             </li>
                         ))}
                     </ul>
+                </nav>
+            </div>
+
+            {/* Mobile bottom navigation - visible only on mobile */}
+            <div className="fixed bottom-0 left-0 right-0 bg-[#202124] text-gray-300 z-30 md:hidden">
+                <nav className="flex justify-around">
+                    {navItems.map((item) => (
+                        <button 
+                            key={item.id}
+                            className={`flex flex-col items-center justify-center py-3 px-4 w-full ${
+                                item.isActive 
+                                    ? 'text-white bg-[#41331C]' 
+                                    : 'hover:bg-gray-700'
+                            }`}
+                            onClick={() => handleNavItemClick(item.id)}
+                        >
+                            {item.icon}
+                            <span className="text-xs mt-1">{item.label}</span>
+                        </button>
+                    ))}
                 </nav>
             </div>
         </>
