@@ -437,11 +437,11 @@ function TaskAddBar() {
             onKeyDown={handleKeyDown}
             className="flex-1 bg-transparent text-white placeholder-gray-400 outline-none resize-none min-h-[24px] max-h-[50vh]"
           />
-          {!isExpanded && (
+          {/* {!isExpanded && (
             <button className="text-gray-400 hover:text-gray-300 ml-2">
               <Paperclip size={18}/>
             </button>
-          )}
+          )} */}
         </div>
 
         {isExpanded && (
@@ -586,9 +586,9 @@ function TaskAddBar() {
                 )}
               </div>
               
-              <button className="p-2 hover:bg-neutral-700 rounded-full">
+              {/* <button className="p-2 hover:bg-neutral-700 rounded-full">
                 <Paperclip size={18}/>
-              </button>
+              </button> */}
               
               {/* Pin Button */}
               <button 
