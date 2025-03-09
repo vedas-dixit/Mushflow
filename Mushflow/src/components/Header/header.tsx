@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, createContext, useContext } from 'react';
+import React, { useEffect, useState, createContext, useContext, useRef } from 'react';
 import { Search, Settings, LayoutGrid, LogIn, LogOut, Music } from 'lucide-react';
 import { LightbulbIcon, Bell, PencilLine, Archive, Trash } from 'lucide-react';
 import { useSession, signIn, signOut } from 'next-auth/react';
@@ -76,20 +76,42 @@ const HeaderWithContext = () => {
     const { data: session, status } = useSession();
     const isAuthenticated = status === 'authenticated';
     const { navItems, setActiveNavId, searchQuery, setSearchQuery } = useHeader();
-
+    const mushhovered = useRef<HTMLDivElement | null>(null);
+    const [mushsrc, setMushsrc] = useState("/mush1.svg");
     const handleNavItemClick = (id: string) => {
         setActiveNavId(id);
-        // You can add additional logic here for navigation if needed
+
         console.log(`Navigated to ${id} view`);
     };
+
+    useEffect(() => {
+        const mush = mushhovered.current;
+        if (mush) {
+            console.log("mush element is available:", mush);
+            
+            const handleMouseEnter = () => {
+                setMushsrc("/mush2.svg");
+            };
+            const handleMouseLeave = () => {
+                setMushsrc("/mush1.svg");
+            };
+            
+            mush.addEventListener('mouseenter', handleMouseEnter);
+            mush.addEventListener('mouseleave', handleMouseLeave);
+            return () => {
+                mush.removeEventListener('mouseenter', handleMouseEnter);
+                mush.removeEventListener('mouseleave', handleMouseLeave);
+            };
+        }
+    }, []);
 
     return (
         <>
             <div className="sticky top-0 left-0 right-0 flex items-center w-full px-4 py-2 bg-stone-800 shadow-sm z-30">
                 <div className="flex items-center">
-                    <div className="flex items-center ml-2">
+                    <div className="flex items-center ml-2" ref={mushhovered}>
                         <img
-                            src="/mush.png"
+                            src={mushsrc}
                             alt="Keep Logo"
                             className="w-10 h-10"
                         />
