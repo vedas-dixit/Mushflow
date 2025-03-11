@@ -4,6 +4,11 @@ import React, { useEffect, useState, createContext, useContext, useRef } from 'r
 import { Search, Settings, LayoutGrid, LogIn, LogOut, Music } from 'lucide-react';
 import { LightbulbIcon, Bell, PencilLine, Archive, Trash } from 'lucide-react';
 import { useSession, signIn, signOut } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { useAppDispatch, useAppSelector } from '@/redux/hooks';
+import { JamState } from '@/redux/features/jamSlice';
+import { setCurrentView } from '@/redux/features/navigationSlice';
+import { showLogin } from '@/redux/features/authSlice';
 
 // Define types for our navigation items
 type NavItem = {
@@ -73,16 +78,36 @@ export const HeaderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
 // The internal component that uses the context
 const HeaderWithContext = () => {
+    const router = useRouter();
     const { data: session, status } = useSession();
     const isAuthenticated = status === 'authenticated';
     const { navItems, setActiveNavId, searchQuery, setSearchQuery } = useHeader();
     const mushhovered = useRef<HTMLDivElement | null>(null);
     const [mushsrc, setMushsrc] = useState("/mush1.svg");
+    const dispatch = useAppDispatch();
+    const jamState = useAppSelector(state => state.jam) as JamState;
+    
     const handleNavItemClick = (id: string) => {
         setActiveNavId(id);
-
-        console.log(`Navigated to ${id} view`);
+        
+        // Check if user is authenticated
+        // if (status !== 'authenticated') {
+        //     dispatch(showLogin());
+        //     return;
+        // }
+        
+        // Update the app state based on the nav item
+        if (id === 'jam' || id === 'notes' || id === 'pinned') {
+            dispatch(setCurrentView(id));
+        } else {
+            console.log(`Navigated to ${id} view`);
+        }
     };
+    useEffect(() => {
+        if (status === 'unauthenticated') {
+          dispatch(showLogin());
+        }
+      }, [status, dispatch]);
 
     useEffect(() => {
         const mush = mushhovered.current;
@@ -239,6 +264,7 @@ const HeaderWithContext = () => {
 
 // Standalone component that doesn't require the context
 function HeaderComponent() {
+    const router = useRouter();
     const { data: session, status } = useSession();
     const isAuthenticated = status === 'authenticated';
     const [navItems, setNavItems] = useState<NavItem[]>([
@@ -247,7 +273,8 @@ function HeaderComponent() {
         { id: 'pinned', icon: <Bell className="w-5 h-5 min-w-[20px]" />, label: 'Pinned' },
     ]);
     const [searchQuery, setSearchQuery] = useState('');
-
+    const dispatch = useAppDispatch();
+    
     const handleNavItemClick = (id: string) => {
         setNavItems(prev => 
             prev.map(item => ({
@@ -255,8 +282,19 @@ function HeaderComponent() {
                 isActive: item.id === id
             }))
         );
-        // You can add additional logic here for navigation if needed
-        console.log(`Navigated to ${id} view`);
+        
+        // Check if user is authenticated
+        if (status !== 'authenticated') {
+            dispatch(showLogin());
+            return;
+        }
+        
+        // Update the app state based on the nav item
+        if (id === 'jam' || id === 'notes' || id === 'pinned') {
+            dispatch(setCurrentView(id));
+        } else {
+            console.log(`Navigated to ${id} view`);
+        }
     };
 
     return (
