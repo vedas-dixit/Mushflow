@@ -1,4 +1,4 @@
-export const predefinedLabels = [
+export const PredefinedLabels = [
     { id: 'work', name: 'Work', color: '#4285F4' },
     { id: 'personal', name: 'Personal', color: '#EA4335' },
     { id: 'important', name: 'Important', color: '#FBBC05' },

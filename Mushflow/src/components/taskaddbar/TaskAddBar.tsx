@@ -9,7 +9,7 @@ import { TaskPriority } from '@/types/Task';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Task } from '@/types/Task';
-
+import { PredefinedLabels } from '@/utils/predefinedLabels';
 interface TaskAddBarProps {
   onTaskAdd?: (newTask: Task) => void;
 }
@@ -60,16 +60,6 @@ function TaskAddBar({ onTaskAdd }: TaskAddBarProps) {
   );
 
   // Predefined labels
-  const predefinedLabels = [
-    { id: 'work', name: 'Work', color: '#4285F4' },
-    { id: 'personal', name: 'Personal', color: '#EA4335' },
-    { id: 'important', name: 'Important', color: '#FBBC05' },
-    { id: 'urgent', name: 'Urgent', color: '#FF5252' },
-    { id: 'health', name: 'Health', color: '#34A853' },
-    { id: 'finance', name: 'Finance', color: '#8E24AA' },
-    { id: 'learning', name: 'Learning', color: '#00ACC1' },
-    { id: 'family', name: 'Family', color: '#FF6D00' },
-  ];
 
   const adjustTextareaHeight = () => {
     const textarea = textareaRef.current;
@@ -445,7 +435,7 @@ function TaskAddBar({ onTaskAdd }: TaskAddBarProps) {
             {labels.length > 0 && (
               <div className="flex flex-wrap gap-1 mb-2">
                 {labels.map(labelId => {
-                  const label = predefinedLabels.find(l => l.id === labelId) || { id: labelId, name: labelId, color: '#9E9E9E' };
+                  const label = PredefinedLabels.find(l => l.id === labelId) || { id: labelId, name: labelId, color: '#9E9E9E' };
                   return (
                     <div 
                       key={label.id} 
@@ -558,7 +548,7 @@ function TaskAddBar({ onTaskAdd }: TaskAddBarProps) {
                     </div>
                     
                     <div className="max-h-40 overflow-y-auto">
-                      {predefinedLabels.map(label => (
+                      {PredefinedLabels.map(label => (
                         <button 
                           key={label.id}
                           className={`flex items-center w-full px-2 py-1 hover:bg-neutral-600 rounded mb-1 ${labels.includes(label.id) ? 'bg-neutral-600' : ''}`}

@@ -3,7 +3,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { Pin, CheckCircle, Calendar, X, Flag, Tag, Plus, Trash2, CheckCircle2, Paperclip, Download, Eye, XCircle } from "lucide-react";
 import { format } from "date-fns";
 import { Task, TaskPriority } from "@/types/Task";
-import { predefinedLabels } from "@/utils/predefinedLabels";
+import { PredefinedLabels } from "@/utils/predefinedLabels";
 import { updateTask, deleteTask } from "@/utils/taskService";
 import { useSession } from "next-auth/react";
 import ModernDatePicker from "../datepickercomponent/DatePickerComponent";
@@ -516,7 +516,7 @@ function Card({
         {labels.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-2">
             {labels.map(labelId => {
-              const label = predefinedLabels.find(l => l.id === labelId) || { id: labelId, name: labelId, color: '#9E9E9E' };
+              const label = PredefinedLabels.find(l => l.id === labelId) || { id: labelId, name: labelId, color: '#9E9E9E' };
               return (
                 <div 
                   key={label.id} 
