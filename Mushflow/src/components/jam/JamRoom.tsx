@@ -1,13 +1,19 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import RoomHeader from './RoomHeader';
 import MusicPlayer from './MusicPlayer';
 import MusicVisualization from './MusicVisualization';
 import ParticipantsList from './ParticipantsList';
 import ChatArea from './ChatArea';
 import { useAppSelector, useAppDispatch } from '@/redux/hooks';
-import { JamState, addMessage, setVolume, setPlaybackState } from '@/redux/features/jamSlice';
+import { 
+  JamState, 
+  sendMessage, 
+  setVolume, 
+  controlPlayback, 
+  fetchRoomDetails 
+} from '@/redux/features/jamSlice';
 
 interface JamRoomProps {
   roomId: string;
@@ -29,18 +35,24 @@ export default function JamRoom({
   const dispatch = useAppDispatch();
   const jamState = useAppSelector(state => state.jam) as JamState;
   
-  // Handle sending a new message
-  const handleSendMessage = (content: string) => {
-    const newMessage = {
-      id: Date.now().toString(),
-      senderId: userId,
-      senderName: userName,
-      content,
-      timestamp: Date.now(),
-      type: 'text' as const
-    };
+  // Periodically refresh room data
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      dispatch(fetchRoomDetails(roomId));
+    }, 10000); // Refresh every 10 seconds
     
-    dispatch(addMessage(newMessage));
+    return () => clearInterval(intervalId);
+  }, [roomId, dispatch]);
+  
+  // Handle sending a new message
+  const handleSendMessage = async (content: string) => {
+    if (!content.trim()) return;
+    
+    try {
+      await dispatch(sendMessage({ roomId, content: content.trim() }));
+    } catch (error) {
+      console.error('Failed to send message:', error);
+    }
   };
   
   // Handle copying room code
@@ -55,8 +67,28 @@ export default function JamRoom({
   };
 
   // Handle play/pause toggle
-  const handlePlayPause = () => {
-    dispatch(setPlaybackState(!jamState.isPlaying));
+  const handlePlayPause = async () => {
+    try {
+      await dispatch(controlPlayback({
+        roomId,
+        action: jamState.isPlaying ? 'PAUSE' : 'PLAY'
+      }));
+    } catch (error) {
+      console.error('Failed to control playback:', error);
+    }
+  };
+  
+  // Handle track change
+  const handleChangeTrack = async (trackId: string) => {
+    try {
+      await dispatch(controlPlayback({
+        roomId,
+        action: 'CHANGE_TRACK',
+        trackId
+      }));
+    } catch (error) {
+      console.error('Failed to change track:', error);
+    }
   };
 
   return (
@@ -66,7 +98,7 @@ export default function JamRoom({
         roomName={roomName}
         roomCode={roomCode}
         participantCount={jamState.participants.length}
-        bannerId={jamState.bannerId || 'library'}
+        bannerId={jamState.bannerId || 1}
         onLeaveRoom={onLeaveRoom}
         onShareRoom={handleCopyRoomCode}
       />
@@ -93,6 +125,9 @@ export default function JamRoom({
                 volume={jamState.volume}
                 onVolumeChange={handleVolumeChange}
                 trackStartTime={jamState.trackStartTime}
+                availableTracks={jamState.availableTracks}
+                onChangeTrack={handleChangeTrack}
+                isChangingTrack={jamState.isChangingTrack}
               />
             ) : (
               <div className="text-center py-4 text-neutral-400">
@@ -113,6 +148,7 @@ export default function JamRoom({
             messages={jamState.messages}
             onSendMessage={handleSendMessage}
             currentUserId={userId}
+            isSending={jamState.isSendingMessage}
           />
         </div>
       </div>

@@ -1,11 +1,12 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
+import axios from 'axios';
 
 // Define types for our state
 export interface Participant {
   id: string;
   name: string;
   isActive: boolean;
-  joinedAt: number;
+  joinedAt: string;
 }
 
 export interface Message {
@@ -13,8 +14,8 @@ export interface Message {
   senderId: string;
   senderName: string;
   content: string;
-  timestamp: number;
-  type: 'text' | 'system' | 'join' | 'leave';
+  timestamp: string;
+  type: 'USER_MESSAGE' | 'SYSTEM_MESSAGE';
 }
 
 export interface Track {
@@ -26,19 +27,30 @@ export interface Track {
   attribution: string;
 }
 
+export interface Room {
+  id: string;
+  name: string;
+  code: string;
+  bannerId: number;
+  createdAt?: string;
+  createdBy?: string;
+  createdByName?: string;
+  participantCount?: number;
+}
+
 export interface JamState {
   // Room state
   inRoom: boolean;
   roomId: string | null;
   roomCode: string | null;
   roomName: string | null;
-  bannerId: string | null;
+  bannerId: number | null;
   
   // Music state
   currentTrack: Track | null;
   isPlaying: boolean;
   volume: number;
-  trackStartTime: number | null;
+  trackStartTime: string | null;
   
   // Participants state
   participants: Participant[];
@@ -46,9 +58,20 @@ export interface JamState {
   // Chat state
   messages: Message[];
   
+  // Available tracks
+  availableTracks: Track[];
+  
+  // Available rooms
+  availableRooms: Room[];
+  
   // UI state
   isCreatingRoom: boolean;
   isJoiningRoom: boolean;
+  isLoadingTracks: boolean;
+  isLoadingRooms: boolean;
+  isLoadingRoom: boolean;
+  isSendingMessage: boolean;
+  isChangingTrack: boolean;
   error: string | null;
 }
 
@@ -73,11 +96,168 @@ const initialState: JamState = {
   // Chat state
   messages: [],
   
+  // Available tracks
+  availableTracks: [],
+  
+  // Available rooms
+  availableRooms: [],
+  
   // UI state
   isCreatingRoom: false,
   isJoiningRoom: false,
+  isLoadingTracks: false,
+  isLoadingRooms: false,
+  isLoadingRoom: false,
+  isSendingMessage: false,
+  isChangingTrack: false,
   error: null,
 };
+
+// Async thunks
+export const fetchTracks = createAsyncThunk(
+  'jam/fetchTracks',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.get('/api/jam/tracks');
+      return response.data.tracks;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        return rejectWithValue(error.response.data.error || 'Failed to fetch tracks');
+      }
+      return rejectWithValue('Failed to fetch tracks');
+    }
+  }
+);
+
+export const fetchRooms = createAsyncThunk(
+  'jam/fetchRooms',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.get('/api/jam/rooms');
+      return response.data.rooms;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        return rejectWithValue(error.response.data.error || 'Failed to fetch rooms');
+      }
+      return rejectWithValue('Failed to fetch rooms');
+    }
+  }
+);
+
+export const createRoom = createAsyncThunk(
+  'jam/createRoom',
+  async (roomData: { name: string; bannerId?: number }, { rejectWithValue }) => {
+    try {
+      const response = await axios.post('/api/jam/rooms', roomData);
+      
+      // Validate the response data
+      const createdRoom = response.data.room;
+      if (!createdRoom || !createdRoom.id) {
+        return rejectWithValue('Invalid room data received from server');
+      }
+      
+      return createdRoom;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        return rejectWithValue(error.response.data.error || 'Failed to create room');
+      }
+      return rejectWithValue('Failed to create room');
+    }
+  }
+);
+
+export const joinRoom = createAsyncThunk(
+  'jam/joinRoom',
+  async (roomCode: string, { rejectWithValue }) => {
+    try {
+      const response = await axios.post('/api/jam/rooms/join', { roomCode });
+      
+      // Validate the response data
+      const roomData = response.data.room;
+      if (!roomData || !roomData.id) {
+        return rejectWithValue('Invalid room data received from server');
+      }
+      
+      return roomData;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        return rejectWithValue(error.response.data.error || 'Failed to join room');
+      }
+      return rejectWithValue('Failed to join room');
+    }
+  }
+);
+
+export const fetchRoomDetails = createAsyncThunk(
+  'jam/fetchRoomDetails',
+  async (roomId: string, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(`/api/jam/rooms/${roomId}`);
+      return response.data.room;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        return rejectWithValue(error.response.data.error || 'Failed to fetch room details');
+      }
+      return rejectWithValue('Failed to fetch room details');
+    }
+  }
+);
+
+export const leaveCurrentRoom = createAsyncThunk(
+  'jam/leaveCurrentRoom',
+  async (roomId: string, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(`/api/jam/rooms/${roomId}/leave`);
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        return rejectWithValue(error.response.data.error || 'Failed to leave room');
+      }
+      return rejectWithValue('Failed to leave room');
+    }
+  }
+);
+
+export const sendMessage = createAsyncThunk(
+  'jam/sendMessage',
+  async ({ roomId, content }: { roomId: string; content: string }, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(`/api/jam/rooms/${roomId}/messages`, { content });
+      return response.data.message;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        return rejectWithValue(error.response.data.error || 'Failed to send message');
+      }
+      return rejectWithValue('Failed to send message');
+    }
+  }
+);
+
+export const controlPlayback = createAsyncThunk(
+  'jam/controlPlayback',
+  async ({ 
+    roomId, 
+    action, 
+    trackId 
+  }: { 
+    roomId: string; 
+    action: 'PLAY' | 'PAUSE' | 'CHANGE_TRACK'; 
+    trackId?: string 
+  }, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(`/api/jam/rooms/${roomId}/playback`, { 
+        action, 
+        trackId 
+      });
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        return rejectWithValue(error.response.data.error || 'Failed to control playback');
+      }
+      return rejectWithValue('Failed to control playback');
+    }
+  }
+);
 
 // Create the slice
 export const jamSlice = createSlice({
@@ -89,7 +269,7 @@ export const jamSlice = createSlice({
       roomId: string;
       roomCode: string;
       roomName: string;
-      bannerId: string;
+      bannerId: number;
     }>) => {
       state.inRoom = true;
       state.roomId = action.payload.roomId;
@@ -113,7 +293,7 @@ export const jamSlice = createSlice({
     // Music actions
     setCurrentTrack: (state, action: PayloadAction<{
       track: Track;
-      startTime: number;
+      startTime: string;
     }>) => {
       state.currentTrack = action.payload.track;
       state.trackStartTime = action.payload.startTime;
@@ -134,7 +314,12 @@ export const jamSlice = createSlice({
     },
     
     addParticipant: (state, action: PayloadAction<Participant>) => {
-      state.participants.push(action.payload);
+      const existingIndex = state.participants.findIndex(p => p.id === action.payload.id);
+      if (existingIndex >= 0) {
+        state.participants[existingIndex] = action.payload;
+      } else {
+        state.participants.push(action.payload);
+      }
     },
     
     removeParticipant: (state, action: PayloadAction<string>) => {
@@ -173,6 +358,147 @@ export const jamSlice = createSlice({
     setError: (state, action: PayloadAction<string | null>) => {
       state.error = action.payload;
     },
+  },
+  extraReducers: (builder) => {
+    // Fetch tracks
+    builder.addCase(fetchTracks.pending, (state) => {
+      state.isLoadingTracks = true;
+      state.error = null;
+    });
+    builder.addCase(fetchTracks.fulfilled, (state, action) => {
+      state.isLoadingTracks = false;
+      state.availableTracks = action.payload;
+    });
+    builder.addCase(fetchTracks.rejected, (state, action) => {
+      state.isLoadingTracks = false;
+      state.error = action.payload as string;
+    });
+    
+    // Fetch rooms
+    builder.addCase(fetchRooms.pending, (state) => {
+      state.isLoadingRooms = true;
+      state.error = null;
+    });
+    builder.addCase(fetchRooms.fulfilled, (state, action) => {
+      state.isLoadingRooms = false;
+      state.availableRooms = action.payload;
+    });
+    builder.addCase(fetchRooms.rejected, (state, action) => {
+      state.isLoadingRooms = false;
+      state.error = action.payload as string;
+    });
+    
+    // Create room
+    builder.addCase(createRoom.pending, (state) => {
+      state.isCreatingRoom = true;
+      state.error = null;
+    });
+    builder.addCase(createRoom.fulfilled, (state, action) => {
+      state.isCreatingRoom = false;
+      state.inRoom = true;
+      state.roomId = action.payload.id;
+      state.roomCode = action.payload.code;
+      state.roomName = action.payload.name;
+      state.bannerId = action.payload.bannerId;
+    });
+    builder.addCase(createRoom.rejected, (state, action) => {
+      state.isCreatingRoom = false;
+      state.error = action.payload as string;
+    });
+    
+    // Join room
+    builder.addCase(joinRoom.pending, (state) => {
+      state.isJoiningRoom = true;
+      state.error = null;
+    });
+    builder.addCase(joinRoom.fulfilled, (state, action) => {
+      state.isJoiningRoom = false;
+      state.inRoom = true;
+      state.roomId = action.payload.id;
+      state.roomCode = action.payload.code;
+      state.roomName = action.payload.name;
+      state.bannerId = action.payload.bannerId;
+    });
+    builder.addCase(joinRoom.rejected, (state, action) => {
+      state.isJoiningRoom = false;
+      state.error = action.payload as string;
+    });
+    
+    // Fetch room details
+    builder.addCase(fetchRoomDetails.pending, (state) => {
+      state.isLoadingRoom = true;
+      state.error = null;
+    });
+    builder.addCase(fetchRoomDetails.fulfilled, (state, action) => {
+      state.isLoadingRoom = false;
+      state.participants = action.payload.participants;
+      state.messages = action.payload.messages;
+      state.currentTrack = action.payload.currentTrack;
+      state.isPlaying = action.payload.isPlaying;
+      state.trackStartTime = action.payload.trackStartTime;
+    });
+    builder.addCase(fetchRoomDetails.rejected, (state, action) => {
+      state.isLoadingRoom = false;
+      state.error = action.payload as string;
+    });
+    
+    // Leave room
+    builder.addCase(leaveCurrentRoom.fulfilled, (state) => {
+      state.inRoom = false;
+      state.roomId = null;
+      state.roomCode = null;
+      state.roomName = null;
+      state.bannerId = null;
+      state.participants = [];
+      state.messages = [];
+      state.currentTrack = null;
+      state.trackStartTime = null;
+    });
+    
+    // Send message
+    builder.addCase(sendMessage.pending, (state) => {
+      state.isSendingMessage = true;
+    });
+    builder.addCase(sendMessage.fulfilled, (state, action) => {
+      state.isSendingMessage = false;
+      state.messages.push(action.payload);
+      
+      // Limit message history to 100 messages
+      if (state.messages.length > 100) {
+        state.messages = state.messages.slice(-100);
+      }
+    });
+    builder.addCase(sendMessage.rejected, (state, action) => {
+      state.isSendingMessage = false;
+      state.error = action.payload as string;
+    });
+    
+    // Control playback
+    builder.addCase(controlPlayback.pending, (state) => {
+      state.isChangingTrack = true;
+    });
+    builder.addCase(controlPlayback.fulfilled, (state, action) => {
+      state.isChangingTrack = false;
+      state.isPlaying = action.payload.room.isPlaying;
+      state.trackStartTime = action.payload.room.trackStartTime;
+      
+      if (action.payload.room.currentTrack) {
+        state.currentTrack = action.payload.room.currentTrack;
+      }
+      
+      if (action.payload.message) {
+        state.messages.push(action.payload.message);
+        
+        // Limit message history to 100 messages
+        if (state.messages.length > 100) {
+          state.messages = state.messages.slice(-100);
+        }
+      }
+    });
+    builder.addCase(controlPlayback.rejected, (state, action) => {
+      state.isChangingTrack = false;
+      state.error = action.payload as string;
+    });
   },
 });
 

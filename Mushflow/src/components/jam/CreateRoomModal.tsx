@@ -7,19 +7,19 @@ import { setCreatingRoom, JamState } from '@/redux/features/jamSlice';
 
 // Banner options
 const bannerOptions = [
-  { id: 'library', name: 'Cozy Library' },
-  { id: 'rainy', name: 'Rainy Window' },
-  { id: 'night', name: 'Night Desk' },
-  { id: 'coffee', name: 'Coffee Shop' },
-  { id: 'forest', name: 'Forest Cabin' },
-  { id: 'urban', name: 'Urban Skyline' },
-  { id: 'campus', name: 'Campus Study Hall' },
-  { id: 'minimal', name: 'Minimal Workspace' },
+  { id: 1, name: 'Cozy Library' },
+  { id: 2, name: 'Rainy Window' },
+  { id: 3, name: 'Night Desk' },
+  { id: 4, name: 'Coffee Shop' },
+  { id: 5, name: 'Forest Cabin' },
+  { id: 6, name: 'Urban Skyline' },
+  { id: 7, name: 'Campus Study Hall' },
+  { id: 8, name: 'Minimal Workspace' },
 ];
 
 interface CreateRoomModalProps {
   onClose: () => void;
-  onRoomCreated: (roomId: string, roomCode: string, roomName: string, bannerId: string) => void;
+  onRoomCreated: (roomName: string, bannerId: number) => void;
   userId: string;
   userName: string;
 }
@@ -52,22 +52,22 @@ export default function CreateRoomModal({
 
   // Handle room creation
   const handleCreateRoom = async () => {
-    dispatch(setCreatingRoom(true));
-    
-    try {
-      // This will be replaced with actual API call later
-      // For now, just simulate a successful creation
-      setTimeout(() => {
-        // Generate a random 6-character room code
-        const roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-        const finalRoomName = getDisplayRoomName();
-        
-        onRoomCreated('mock-room-id', roomCode, finalRoomName, selectedBanner);
-        dispatch(setCreatingRoom(false));
-      }, 1000);
-    } catch (error) {
-      console.error('Error creating room:', error);
-      dispatch(setCreatingRoom(false));
+    const finalRoomName = getDisplayRoomName();
+    onRoomCreated(finalRoomName, selectedBanner);
+  };
+
+  // Get emoji for banner ID
+  const getBannerEmoji = (bannerId: number) => {
+    switch (bannerId) {
+      case 1: return '📚'; // Library
+      case 2: return '🌧️'; // Rainy
+      case 3: return '🌙'; // Night
+      case 4: return '☕'; // Coffee
+      case 5: return '🌲'; // Forest
+      case 6: return '🏙️'; // Urban
+      case 7: return '🏛️'; // Campus
+      case 8: return '💻'; // Minimal
+      default: return '📚';
     }
   };
 
@@ -115,14 +115,7 @@ export default function CreateRoomModal({
                   `}
                 >
                   <div className="h-full flex items-center justify-center text-2xl">
-                    {banner.id === 'library' && '📚'}
-                    {banner.id === 'rainy' && '🌧️'}
-                    {banner.id === 'night' && '🌙'}
-                    {banner.id === 'coffee' && '☕'}
-                    {banner.id === 'forest' && '🌲'}
-                    {banner.id === 'urban' && '🏙️'}
-                    {banner.id === 'campus' && '🏛️'}
-                    {banner.id === 'minimal' && '💻'}
+                    {getBannerEmoji(banner.id)}
                   </div>
                 </div>
               ))}

@@ -6,20 +6,22 @@ interface Message {
   senderId: string;
   senderName: string;
   content: string;
-  timestamp: number;
-  type: 'text' | 'system' | 'join' | 'leave';
+  timestamp: string;
+  type: 'USER_MESSAGE' | 'SYSTEM_MESSAGE';
 }
 
 interface ChatAreaProps {
   messages: Message[];
   onSendMessage: (content: string) => void;
   currentUserId: string;
+  isSending?: boolean;
 }
 
 export default function ChatArea({
   messages,
   onSendMessage,
-  currentUserId
+  currentUserId,
+  isSending = false
 }: ChatAreaProps) {
   const [messageInput, setMessageInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -33,7 +35,7 @@ export default function ChatArea({
   
   // Handle sending a message
   const handleSendMessage = () => {
-    if (messageInput.trim()) {
+    if (messageInput.trim() && !isSending) {
       onSendMessage(messageInput.trim());
       setMessageInput('');
     }
@@ -48,7 +50,7 @@ export default function ChatArea({
   };
   
   // Format timestamp
-  const formatTime = (timestamp: number) => {
+  const formatTime = (timestamp: string) => {
     const date = new Date(timestamp);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
@@ -66,11 +68,10 @@ export default function ChatArea({
             <div 
               key={message.id}
               className={`
-                ${message.type === 'system' ? 'text-neutral-500 text-sm italic' : ''}
-                ${message.type === 'join' || message.type === 'leave' ? 'text-neutral-500 text-sm' : ''}
+                ${message.type === 'SYSTEM_MESSAGE' ? 'text-neutral-500 text-sm italic' : ''}
               `}
             >
-              {message.type === 'text' && (
+              {message.type === 'USER_MESSAGE' && (
                 <div className={`flex ${message.senderId === currentUserId ? 'justify-end' : 'justify-start'}`}>
                   <div 
                     className={`
@@ -93,15 +94,9 @@ export default function ChatArea({
                 </div>
               )}
               
-              {message.type === 'system' && (
+              {message.type === 'SYSTEM_MESSAGE' && (
                 <div className="text-center py-1">
                   {message.content}
-                </div>
-              )}
-              
-              {(message.type === 'join' || message.type === 'leave') && (
-                <div className="text-center py-1">
-                  <span className="font-medium">{message.senderName}</span> {message.content}
                 </div>
               )}
             </div>
@@ -120,10 +115,11 @@ export default function ChatArea({
             onKeyDown={handleKeyPress}
             placeholder="Type a message..."
             className="flex-1 bg-neutral-700 border border-neutral-600 rounded-l-lg py-2 px-3 text-white placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+            disabled={isSending}
           />
           <button
             onClick={handleSendMessage}
-            disabled={!messageInput.trim()}
+            disabled={!messageInput.trim() || isSending}
             className="bg-amber-500 hover:bg-amber-600 text-white rounded-r-lg px-4 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <Send size={18} />

@@ -5,7 +5,7 @@ interface Participant {
   id: string;
   name: string;
   isActive: boolean;
-  joinedAt: number;
+  joinedAt: string;
 }
 
 interface ParticipantsListProps {

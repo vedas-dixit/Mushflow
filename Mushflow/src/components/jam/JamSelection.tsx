@@ -1,14 +1,22 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Music, Users, Code } from 'lucide-react';
 import CreateRoomModal from './CreateRoomModal';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
-import { setRoomData, setJoiningRoom, setError, JamState } from '@/redux/features/jamSlice';
+import { 
+  setRoomData, 
+  setJoiningRoom, 
+  setError, 
+  JamState, 
+  createRoom, 
+  joinRoom, 
+  fetchRooms 
+} from '@/redux/features/jamSlice';
 
 interface JamSelectionProps {
-  onRoomCreated: (roomId: string, roomCode: string, roomName: string, bannerId: string) => void;
-  onRoomJoined: (roomId: string, roomCode: string, roomName: string, bannerId: string) => void;
+  onRoomCreated: (roomId: string, roomCode: string, roomName: string, bannerId: number) => void;
+  onRoomJoined: (roomId: string, roomCode: string, roomName: string, bannerId: number) => void;
   userId: string;
   userName: string;
 }
@@ -24,12 +32,32 @@ export default function JamSelection({
   
   const dispatch = useAppDispatch();
   const jamState = useAppSelector(state => state.jam) as JamState;
-  const { isJoiningRoom, error } = jamState;
+  const { isJoiningRoom, isCreatingRoom, error, availableRooms } = jamState;
+
+  // Fetch available rooms on component mount
+  useEffect(() => {
+    dispatch(fetchRooms());
+  }, [dispatch]);
 
   // Handle room creation
-  const handleCreateRoom = (roomId: string, roomCode: string, roomName: string, bannerId: string) => {
-    setShowCreateModal(false);
-    onRoomCreated(roomId, roomCode, roomName, bannerId);
+  const handleCreateRoom = async (roomName: string, bannerId: number) => {
+    try {
+      const resultAction = await dispatch(createRoom({ name: roomName, bannerId }));
+      if (createRoom.fulfilled.match(resultAction)) {
+        const room = resultAction.payload;
+        console.log("Created room:", room);
+        if (room && room.id) {
+          onRoomCreated(room.id, room.code, room.name, room.bannerId);
+          setShowCreateModal(false);
+        } else {
+          console.error("Invalid room data received:", room);
+          dispatch(setError('Failed to create room: Invalid response data'));
+        }
+      }
+    } catch (error) {
+      console.error('Failed to create room:', error);
+      dispatch(setError('Failed to create room'));
+    }
   };
 
   // Handle room join
@@ -39,24 +67,26 @@ export default function JamSelection({
       return;
     }
 
-    dispatch(setJoiningRoom(true));
-    dispatch(setError(null));
-
     try {
-      // This will be replaced with actual API call later
-      // For now, just simulate a successful join
-      setTimeout(() => {
-        onRoomJoined('mock-room-id', joinCode, 'Study Room', 'library');
-        dispatch(setJoiningRoom(false));
-      }, 1000);
+      const resultAction = await dispatch(joinRoom(joinCode.trim()));
+      if (joinRoom.fulfilled.match(resultAction)) {
+        const room = resultAction.payload;
+        console.log("Joined room:", room);
+        if (room && room.id) {
+          onRoomJoined(room.id, room.code, room.name, room.bannerId);
+        } else {
+          console.error("Invalid room data received:", room);
+          dispatch(setError('Failed to join room: Invalid response data'));
+        }
+      }
     } catch (error) {
-      dispatch(setError('Invalid room code or room not found'));
-      dispatch(setJoiningRoom(false));
+      console.error('Failed to join room:', error);
+      dispatch(setError('Failed to join room: Room not found or invalid code'));
     }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-full p-4">
+    <div className="flex flex-col items-center justify-center h-screen p-4">
       <div className="w-full max-w-md bg-neutral-800 rounded-xl shadow-xl overflow-hidden">
         <div className="p-8">
           <div className="text-center mb-8">
@@ -74,10 +104,11 @@ export default function JamSelection({
           <div className="space-y-6">
             <button
               onClick={() => setShowCreateModal(true)}
-              className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-medium py-3 px-4 rounded-lg flex items-center justify-center transition-all duration-200"
+              disabled={isCreatingRoom}
+              className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-medium py-3 px-4 rounded-lg flex items-center justify-center transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Users size={18} className="mr-2" />
-              Create a New Room
+              {isCreatingRoom ? 'Creating...' : 'Create a New Room'}
             </button>
 
             <div className="relative">
@@ -118,6 +149,41 @@ export default function JamSelection({
               </button>
             </div>
           </div>
+          
+          {availableRooms.length > 0 && (
+            <div className="mt-8">
+              <div className="relative mb-4">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-neutral-700"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-neutral-800 text-neutral-400">Available Rooms</span>
+                </div>
+              </div>
+              
+              <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
+                {availableRooms.map(room => (
+                  <div 
+                    key={room.id}
+                    onClick={() => setJoinCode(room.code)}
+                    className="bg-neutral-700 hover:bg-neutral-600 rounded-lg p-3 cursor-pointer transition-colors"
+                  >
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h3 className="font-medium text-white">{room.name}</h3>
+                        <p className="text-xs text-neutral-400">
+                          {room.participantCount} {room.participantCount === 1 ? 'participant' : 'participants'}
+                        </p>
+                      </div>
+                      <div className="bg-neutral-800 px-2 py-1 rounded text-xs font-mono">
+                        {room.code}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

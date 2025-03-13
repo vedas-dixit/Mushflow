@@ -9,11 +9,10 @@ import {
   leaveRoom, 
   setRoomData, 
   JamState, 
-  setParticipants, 
-  setCurrentTrack,
-  addMessage 
+  fetchRoomDetails,
+  leaveCurrentRoom,
+  fetchTracks
 } from '@/redux/features/jamSlice';
-import { getMockRoomData } from '@/redux/mockData';
 import { showLogin } from '@/redux/features/authSlice';
 
 export default function JamPage() {
@@ -22,37 +21,43 @@ export default function JamPage() {
   const { user, status } = useAppSelector(state => state.auth);
 
   // Handle leaving a room
-  const handleLeaveRoom = () => {
-    dispatch(leaveRoom());
+  const handleLeaveRoom = async () => {
+    if (jamState.roomId) {
+      try {
+        await dispatch(leaveCurrentRoom(jamState.roomId));
+      } catch (error) {
+        console.error('Failed to leave room:', error);
+        // Fallback to local state cleanup if API call fails
+        dispatch(leaveRoom());
+      }
+    } else {
+      dispatch(leaveRoom());
+    }
   };
 
   // Handle room creation or joining
-  const handleRoomEntered = (roomId: string, roomCode: string, roomName: string, bannerId: string) => {
+  const handleRoomEntered = async (roomId: string, roomCode: string, roomName: string, bannerId: number) => {
+    console.log("Room entered:", { roomId, roomCode, roomName, bannerId });
+    
     // First set the basic room data
     dispatch(setRoomData({ roomId, roomCode, roomName, bannerId }));
     
-    // Then populate with mock data
-    if (user) {
-      const mockData = getMockRoomData(
-        user.id || 'anonymous', 
-        user.name || 'Anonymous User'
-      );
-      
-      // Set participants
-      dispatch(setParticipants(mockData.participants));
-      
-      // Set current track
-      dispatch(setCurrentTrack({
-        track: mockData.currentTrack,
-        startTime: mockData.trackStartTime
-      }));
-      
-      // Add join message
-      mockData.messages.forEach(message => {
-        dispatch(addMessage(message));
-      });
+    // Then fetch room details
+    try {
+      if (roomId) {
+        await dispatch(fetchRoomDetails(roomId));
+      } else {
+        console.error("Room ID is undefined or empty");
+      }
+    } catch (error) {
+      console.error('Failed to fetch room details:', error);
     }
   };
+
+  // Fetch tracks when component mounts
+  useEffect(() => {
+    dispatch(fetchTracks());
+  }, [dispatch]);
 
   // Show login modal if user is not authenticated
   useEffect(() => {
@@ -64,7 +69,7 @@ export default function JamPage() {
   // Show loading state
   if (status === "loading") {
     return (
-      <div className="min-h-screen bg-neutral-900 text-white flex items-center justify-center">
+      <div className="h-full bg-neutral-900 text-white flex items-center justify-center">
         <div className="animate-pulse flex flex-col items-center">
           <div className="bg-amber-500/20 p-4 rounded-full mb-4">
             <Music size={32} className="text-amber-500" />
@@ -81,7 +86,7 @@ export default function JamPage() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-900 text-white">
+    <div className="h-full bg-neutral-900 text-white">
       {!jamState.inRoom ? (
         <JamSelection 
           onRoomCreated={handleRoomEntered}

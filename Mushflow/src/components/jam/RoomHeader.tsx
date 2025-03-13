@@ -5,7 +5,7 @@ interface RoomHeaderProps {
   roomName: string;
   roomCode: string;
   participantCount: number;
-  bannerId: string;
+  bannerId: number;
   onLeaveRoom: () => void;
   onShareRoom: () => void;
 }
