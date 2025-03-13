@@ -5,6 +5,7 @@ import { DynamicHeader, useHeader } from '../Header/header'
 import CardBox from '../cardbox/CardBox'
 import TaskAddBar from '../taskaddbar/TaskAddBar'
 import Whiteboard from '../DrawingBoard/Tldraw'
+import JamPage from '../jam/JamPage'
 import { Task } from '@/types/Task'
 
 interface HomePageProps {
@@ -76,9 +77,7 @@ function HomePage({ tasks: initialTasks }: HomePageProps) {
       )}
       
       {activeNavId === 'jam' && (
-        <div className="mt-16 pl-4 md:pl-16">
-          <Whiteboard/>
-        </div>
+        <JamPage />
       )}
 
       {/* Show Whiteboard in all views except JAM */}
