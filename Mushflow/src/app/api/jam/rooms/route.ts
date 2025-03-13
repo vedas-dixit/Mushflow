@@ -18,7 +18,7 @@ function generateRoomCode() {
 // Function to check if a room code is unique
 async function isRoomCodeUnique(code: string) {
   const result = await docClient.send(new QueryCommand({
-    TableName: process.env.DYNAMODB_TABLE,
+    TableName: MAIN_TABLE_NAME,
     IndexName: 'GSI1',
     KeyConditionExpression: 'GSI1PK = :gsi1pk AND GSI1SK = :gsi1sk',
     ExpressionAttributeValues: {
@@ -30,6 +30,13 @@ async function isRoomCodeUnique(code: string) {
   return !result.Items || result.Items.length === 0;
 }
 
+// Get the tracks table name from environment variables
+const TRACKS_TABLE_NAME = process.env.TRACKS_DYNAMODB_TABLE || 'MushflowTracks';
+// Get the chat table name from environment variables
+const CHAT_TABLE_NAME = process.env.CHAT_DYNAMODB_TABLE || 'MushflowChat';
+// Main table name
+const MAIN_TABLE_NAME = process.env.DYNAMODB_TABLE;
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -40,7 +47,7 @@ export async function GET(request: NextRequest) {
     
     // Query all rooms
     const result = await docClient.send(new QueryCommand({
-      TableName: process.env.DYNAMODB_TABLE,
+      TableName: MAIN_TABLE_NAME,
       IndexName: 'GSI1',
       KeyConditionExpression: 'GSI1PK = :gsi1pk',
       ExpressionAttributeValues: {
@@ -98,6 +105,19 @@ export async function POST(request: NextRequest) {
     
     const timestamp = new Date().toISOString();
     
+    // Get a default track from the tracks table
+    const tracksResult = await docClient.send(new QueryCommand({
+      TableName: TRACKS_TABLE_NAME,
+      IndexName: 'GSI1',
+      KeyConditionExpression: 'GSI1PK = :pk',
+      ExpressionAttributeValues: {
+        ':pk': 'PUBLIC_TRACKS'
+      },
+      Limit: 1
+    }));
+    
+    const defaultTrack = tracksResult.Items && tracksResult.Items.length > 0 ? tracksResult.Items[0] : null;
+    
     // Create the room
     const room = {
       PK: `ROOM#${roomId}`,
@@ -112,17 +132,19 @@ export async function POST(request: NextRequest) {
       createdBy: session.user.id,
       createdByName: session.user.name,
       isPlaying: false,
-      participantCount: 1
+      participantCount: 1,
+      currentTrackId: defaultTrack ? defaultTrack.id : null,
+      currentTrackTitle: defaultTrack ? defaultTrack.title : null
     };
     
     await docClient.send(new PutCommand({
-      TableName: process.env.DYNAMODB_TABLE,
+      TableName: MAIN_TABLE_NAME,
       Item: room
     }));
     
     // Add room code to GSI for uniqueness check
     await docClient.send(new PutCommand({
-      TableName: process.env.DYNAMODB_TABLE,
+      TableName: MAIN_TABLE_NAME,
       Item: {
         PK: `ROOM_CODE#${roomCode}`,
         SK: `ROOM#${roomId}`,
@@ -135,7 +157,7 @@ export async function POST(request: NextRequest) {
     // Add the creator as a participant
     const participantId = session.user.id;
     await docClient.send(new PutCommand({
-      TableName: process.env.DYNAMODB_TABLE,
+      TableName: MAIN_TABLE_NAME,
       Item: {
         PK: `ROOM#${roomId}`,
         SK: `USER#${participantId}`,
@@ -151,10 +173,10 @@ export async function POST(request: NextRequest) {
       }
     }));
     
-    // Add a welcome message
+    // Add a welcome message to the chat table
     const messageId = uuidv4();
     await docClient.send(new PutCommand({
-      TableName: process.env.DYNAMODB_TABLE,
+      TableName: CHAT_TABLE_NAME,
       Item: {
         PK: `ROOM#${roomId}`,
         SK: `MSG#${timestamp}#${messageId}`,
@@ -179,7 +201,9 @@ export async function POST(request: NextRequest) {
         bannerId: bannerId || 1,
         createdAt: timestamp,
         createdBy: session.user.id,
-        createdByName: session.user.name
+        createdByName: session.user.name,
+        currentTrackId: defaultTrack ? defaultTrack.id : null,
+        currentTrackTitle: defaultTrack ? defaultTrack.title : null
       }
     });
   } catch (error) {
