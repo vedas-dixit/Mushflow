@@ -14,6 +14,7 @@ import {
   controlPlayback, 
   fetchRoomDetails 
 } from '@/redux/features/jamSlice';
+import { useRTM } from '@/providers/RTMProvider';
 
 interface JamRoomProps {
   roomId: string;
@@ -34,24 +35,38 @@ export default function JamRoom({
 }: JamRoomProps) {
   const dispatch = useAppDispatch();
   const jamState = useAppSelector(state => state.jam) as JamState;
+  const rtm = useRTM();
   
-  // Periodically refresh room data
+  // Periodically refresh room data as a fallback
   useEffect(() => {
+    // Set up a less frequent polling as a fallback
+    // This is just in case RTM has issues
     const intervalId = setInterval(() => {
-      dispatch(fetchRoomDetails(roomId));
-    }, 10000); // Refresh every 10 seconds
+      if (!jamState.rtmConnected) {
+        console.log("RTM not connected, falling back to polling");
+        dispatch(fetchRoomDetails(roomId));
+      }
+    }, 30000); // Every 30 seconds as a fallback
     
     return () => clearInterval(intervalId);
-  }, [roomId, dispatch]);
+  }, [roomId, dispatch, jamState.rtmConnected]);
   
   // Handle sending a new message
   const handleSendMessage = async (content: string) => {
     if (!content.trim()) return;
     
     try {
-      await dispatch(sendMessage({ roomId, content: content.trim() }));
+      // Send message via RTM
+      const rtmSuccess = await rtm.sendChannelMessage(content.trim(), 'USER_MESSAGE');
+      
+      // If RTM fails, fall back to API
+      if (!rtmSuccess) {
+        await dispatch(sendMessage({ roomId, content: content.trim() }));
+      }
     } catch (error) {
       console.error('Failed to send message:', error);
+      // Fall back to API
+      await dispatch(sendMessage({ roomId, content: content.trim() }));
     }
   };
   
@@ -69,25 +84,50 @@ export default function JamRoom({
   // Handle play/pause toggle
   const handlePlayPause = async () => {
     try {
+      // Send playback command via RTM
+      const rtmSuccess = await rtm.sendPlaybackCommand(
+        jamState.isPlaying ? 'PAUSE' : 'PLAY'
+      );
+      
+      // If RTM fails, fall back to API
+      if (!rtmSuccess) {
+        await dispatch(controlPlayback({
+          roomId,
+          action: jamState.isPlaying ? 'PAUSE' : 'PLAY'
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to control playback:', error);
+      // Fall back to API
       await dispatch(controlPlayback({
         roomId,
         action: jamState.isPlaying ? 'PAUSE' : 'PLAY'
       }));
-    } catch (error) {
-      console.error('Failed to control playback:', error);
     }
   };
   
   // Handle track change
   const handleChangeTrack = async (trackId: string) => {
     try {
+      // Send track change command via RTM
+      const rtmSuccess = await rtm.sendPlaybackCommand('CHANGE_TRACK', trackId);
+      
+      // If RTM fails, fall back to API
+      if (!rtmSuccess) {
+        await dispatch(controlPlayback({
+          roomId,
+          action: 'CHANGE_TRACK',
+          trackId
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to change track:', error);
+      // Fall back to API
       await dispatch(controlPlayback({
         roomId,
         action: 'CHANGE_TRACK',
         trackId
       }));
-    } catch (error) {
-      console.error('Failed to change track:', error);
     }
   };
 

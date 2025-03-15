@@ -74,7 +74,7 @@ function Card({
 
   // Debug initial attachments
   useEffect(() => {
-    console.log('Initial attachments prop:', attachments);
+    // console.log('Initial attachments prop:', attachments);
   }, []);
 
   useEffect(() => {
@@ -94,7 +94,7 @@ function Card({
   // Update attachments when props change - CRITICAL for refresh behavior
   useEffect(() => {
     if (attachments && attachments.length > 0) {
-      console.log('Updating attachments from props:', attachments);
+      // console.log('Updating attachments from props:', attachments);
       setTaskAttachments(attachments);
     }
   }, [attachments]);

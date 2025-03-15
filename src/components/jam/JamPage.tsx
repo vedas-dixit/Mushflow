@@ -11,20 +11,33 @@ import {
   JamState, 
   fetchRoomDetails,
   leaveCurrentRoom,
-  fetchTracks
+  fetchTracks,
+  setRTMConnected
 } from '@/redux/features/jamSlice';
 import { showLogin } from '@/redux/features/authSlice';
+import { useRTM } from '@/providers/RTMProvider';
 
 export default function JamPage() {
   const dispatch = useAppDispatch();
   const jamState = useAppSelector(state => state.jam) as JamState;
   const { user, status } = useAppSelector(state => state.auth);
+  const rtm = useRTM();
 
   // Handle leaving a room
   const handleLeaveRoom = async () => {
     if (jamState.roomId) {
       try {
+        console.log("Leaving room:", jamState.roomId);
+        
+        // Leave RTM channel
+        console.log("Leaving RTM channel...");
+        await rtm.leaveChannel();
+        dispatch(setRTMConnected(false));
+        
+        // Leave room via API
+        console.log("Leaving room via API...");
         await dispatch(leaveCurrentRoom(jamState.roomId));
+        console.log("Successfully left room");
       } catch (error) {
         console.error('Failed to leave room:', error);
         // Fallback to local state cleanup if API call fails
@@ -45,7 +58,20 @@ export default function JamPage() {
     // Then fetch room details
     try {
       if (roomId) {
+        console.log("Fetching room details for room:", roomId);
         await dispatch(fetchRoomDetails(roomId));
+        
+        // Initialize RTM connection
+        console.log("Initializing RTM connection for room:", roomId);
+        try {
+          await rtm.joinChannel(roomId);
+          console.log("Successfully joined RTM channel for room:", roomId);
+          dispatch(setRTMConnected(true));
+        } catch (rtmError) {
+          console.error("Failed to join RTM channel:", rtmError);
+          dispatch(setRTMConnected(false));
+          // Continue with the app even if RTM fails - we'll fall back to polling
+        }
       } else {
         console.error("Room ID is undefined or empty");
       }

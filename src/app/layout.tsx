@@ -1,13 +1,19 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import AuthProvider from "@/providers/AuthProvider";
 import { HeaderProvider } from "@/components/Header/header";
-import ReduxProvider from "@/providers/ReduxProvider";
 import MiniPlayer from "@/components/jam/MiniPlayer";
-import AuthSyncProvider from "@/providers/AuthSyncProvider";
 import LoginModal from "@/components/auth/LoginModal";
 import AppViewManager from "@/components/AppViewManager";
+import Script from "next/script";
+import { Providers } from "@/providers";
+
+// Add type declaration for the global AgoraRTM object
+declare global {
+  interface Window {
+    AgoraRTM?: any;
+  }
+}
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,22 +37,25 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        {/* Load Agora RTM SDK from CDN as a fallback */}
+        <Script 
+          src="https://download.agora.io/sdk/release/agora-rtm-2.2.1.js" 
+          strategy="beforeInteractive"
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <AuthProvider>
-          <ReduxProvider>
-            <AuthSyncProvider>
-              <HeaderProvider>
-                <AppViewManager>
-                  {children}
-                </AppViewManager>
-                <MiniPlayer />
-                <LoginModal />
-              </HeaderProvider>
-            </AuthSyncProvider>
-          </ReduxProvider>
-        </AuthProvider>
+        <Providers>
+          <HeaderProvider>
+            <AppViewManager>
+              {children}
+            </AppViewManager>
+            <MiniPlayer />
+            <LoginModal />
+          </HeaderProvider>
+        </Providers>
       </body>
     </html>
   );
