@@ -5,6 +5,9 @@ import { docClient } from '@/lib/dynamodb';
 import { GetCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
 import { v4 as uuidv4 } from 'uuid';
 
+const CHAT_TABLE_NAME = process.env.CHAT_DYNAMODB_TABLE || 'MushflowChat';
+// Main table name
+const MAIN_TABLE_NAME = process.env.DYNAMODB_TABLE;
 export async function POST(
   request: NextRequest,
   { params }: { params: { roomId: string } }
@@ -24,7 +27,9 @@ export async function POST(
     
     // Check if the room exists
     const roomResult = await docClient.send(new GetCommand({
-      TableName: process.env.DYNAMODB_TABLE,
+
+      TableName: MAIN_TABLE_NAME,
+
       Key: {
         PK: `ROOM#${roomId}`,
         SK: 'METADATA'
@@ -42,7 +47,8 @@ export async function POST(
     };
     
     const participantResult = await docClient.send(new GetCommand({
-      TableName: process.env.DYNAMODB_TABLE,
+      TableName: MAIN_TABLE_NAME,
+
       Key: participantKey
     }));
     
@@ -76,14 +82,17 @@ export async function POST(
       type: 'USER_MESSAGE'
     };
     
+
+    // Store the message in the chat table
     await docClient.send(new PutCommand({
-      TableName: process.env.DYNAMODB_TABLE,
+      TableName: CHAT_TABLE_NAME,
       Item: message
     }));
     
     // Update participant's last activity
     await docClient.send(new PutCommand({
-      TableName: process.env.DYNAMODB_TABLE,
+      TableName: MAIN_TABLE_NAME,
+
       Item: {
         ...participantResult.Item,
         lastActive: timestamp

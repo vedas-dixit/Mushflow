@@ -5,6 +5,13 @@ import { docClient } from '@/lib/dynamodb';
 import { GetCommand, UpdateCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
 import { v4 as uuidv4 } from 'uuid';
 
+
+// Get the tracks table name from environment variables
+const TRACKS_TABLE_NAME = process.env.TRACKS_DYNAMODB_TABLE || 'MushflowTracks';
+// Get the chat table name from environment variables
+const CHAT_TABLE_NAME = process.env.CHAT_DYNAMODB_TABLE || 'MushflowChat';
+// Main table name
+const MAIN_TABLE_NAME = process.env.DYNAMODB_TABLE;
 export async function POST(
   request: NextRequest,
   { params }: { params: { roomId: string } }
@@ -24,7 +31,8 @@ export async function POST(
     
     // Check if the room exists
     const roomResult = await docClient.send(new GetCommand({
-      TableName: process.env.DYNAMODB_TABLE,
+      TableName: MAIN_TABLE_NAME,
+
       Key: {
         PK: `ROOM#${roomId}`,
         SK: 'METADATA'
@@ -42,7 +50,8 @@ export async function POST(
     };
     
     const participantResult = await docClient.send(new GetCommand({
-      TableName: process.env.DYNAMODB_TABLE,
+      TableName: MAIN_TABLE_NAME,
+
       Key: participantKey
     }));
     
@@ -95,9 +104,10 @@ export async function POST(
           return NextResponse.json({ error: 'Track ID is required for CHANGE_TRACK action' }, { status: 400 });
         }
         
-        // Check if the track exists
+        // Check if the track exists in the dedicated tracks table
         const trackResult = await docClient.send(new GetCommand({
-          TableName: process.env.DYNAMODB_TABLE,
+          TableName: TRACKS_TABLE_NAME,
+
           Key: {
             PK: `TRACK#${trackId}`,
             SK: 'METADATA'
@@ -127,7 +137,8 @@ export async function POST(
     
     // Update the room
     await docClient.send(new UpdateCommand({
-      TableName: process.env.DYNAMODB_TABLE,
+
+      TableName: MAIN_TABLE_NAME,
       Key: {
         PK: `ROOM#${roomId}`,
         SK: 'METADATA'
@@ -137,7 +148,8 @@ export async function POST(
       ExpressionAttributeNames: expressionAttributeNames
     }));
     
-    // Add a system message about the action
+
+    // Add a system message about the action to the chat table
     const messageId = uuidv4();
     
     const message = {
@@ -155,13 +167,17 @@ export async function POST(
     };
     
     await docClient.send(new PutCommand({
-      TableName: process.env.DYNAMODB_TABLE,
+
+      TableName: CHAT_TABLE_NAME,
+
       Item: message
     }));
     
     // Update participant's last activity
     await docClient.send(new PutCommand({
-      TableName: process.env.DYNAMODB_TABLE,
+
+      TableName: MAIN_TABLE_NAME,
+
       Item: {
         ...participantResult.Item,
         lastActive: timestamp
@@ -170,18 +186,20 @@ export async function POST(
     
     // Get the updated room data
     const updatedRoomResult = await docClient.send(new GetCommand({
-      TableName: process.env.DYNAMODB_TABLE,
+
+      TableName: MAIN_TABLE_NAME,
       Key: {
         PK: `ROOM#${roomId}`,
         SK: 'METADATA'
       }
     }));
     
-    // Get current track if there is one
+
+    // Get current track if there is one from the tracks table
     let currentTrack = null;
     if (updatedRoomResult.Item?.currentTrackId) {
       const trackResult = await docClient.send(new GetCommand({
-        TableName: process.env.DYNAMODB_TABLE,
+        TableName: TRACKS_TABLE_NAME,
         Key: {
           PK: `TRACK#${updatedRoomResult.Item.currentTrackId}`,
           SK: 'METADATA'

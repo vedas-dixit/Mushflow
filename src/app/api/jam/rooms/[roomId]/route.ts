@@ -4,6 +4,13 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { docClient } from '@/lib/dynamodb';
 import { GetCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 
+// Get the tracks table name from environment variables
+const TRACKS_TABLE_NAME = process.env.TRACKS_DYNAMODB_TABLE || 'MushflowTracks';
+// Get the chat table name from environment variables
+const CHAT_TABLE_NAME = process.env.CHAT_DYNAMODB_TABLE || 'MushflowChat';
+// Main table name
+const MAIN_TABLE_NAME = process.env.DYNAMODB_TABLE;
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { roomId: string } }
@@ -23,7 +30,8 @@ export async function GET(
     
     // Get room metadata
     const roomResult = await docClient.send(new GetCommand({
-      TableName: process.env.DYNAMODB_TABLE,
+
+      TableName: MAIN_TABLE_NAME,
       Key: {
         PK: `ROOM#${roomId}`,
         SK: 'METADATA'
@@ -41,7 +49,8 @@ export async function GET(
     };
     
     const participantResult = await docClient.send(new GetCommand({
-      TableName: process.env.DYNAMODB_TABLE,
+      TableName: MAIN_TABLE_NAME,
+
       Key: participantKey
     }));
     
@@ -51,7 +60,8 @@ export async function GET(
     
     // Get all participants
     const participantsResult = await docClient.send(new QueryCommand({
-      TableName: process.env.DYNAMODB_TABLE,
+
+      TableName: MAIN_TABLE_NAME,
       KeyConditionExpression: 'PK = :pk AND begins_with(SK, :sk)',
       ExpressionAttributeValues: {
         ':pk': `ROOM#${roomId}`,
@@ -59,9 +69,9 @@ export async function GET(
       }
     }));
     
-    // Get recent messages (limited to 50)
+    // Get recent messages from the chat table (limited to 50)
     const messagesResult = await docClient.send(new QueryCommand({
-      TableName: process.env.DYNAMODB_TABLE,
+      TableName: CHAT_TABLE_NAME,
       KeyConditionExpression: 'PK = :pk AND begins_with(SK, :sk)',
       ExpressionAttributeValues: {
         ':pk': `ROOM#${roomId}`,
@@ -71,11 +81,12 @@ export async function GET(
       Limit: 50
     }));
     
-    // Get current track if there is one
+
+    // Get current track if there is one from the tracks table
     let currentTrack = null;
     if (roomResult.Item.currentTrackId) {
       const trackResult = await docClient.send(new GetCommand({
-        TableName: process.env.DYNAMODB_TABLE,
+        TableName: TRACKS_TABLE_NAME,
         Key: {
           PK: `TRACK#${roomResult.Item.currentTrackId}`,
           SK: 'METADATA'

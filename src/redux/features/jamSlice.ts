@@ -50,7 +50,7 @@ export interface JamState {
   currentTrack: Track | null;
   isPlaying: boolean;
   volume: number;
-  trackStartTime: string | null;
+  trackStartTime: string | any; //TODO:fix new (number)type here
   
   // Participants state
   participants: Participant[];
