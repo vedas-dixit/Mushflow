@@ -20,6 +20,7 @@ export async function GET(request: NextRequest) {
     // Query for all public tracks from the dedicated tracks table
     const result = await docClient.send(new QueryCommand({
       TableName: TABLE_NAME,
+
       IndexName: 'GSI1',
       KeyConditionExpression: 'GSI1PK = :pk',
       ExpressionAttributeValues: {

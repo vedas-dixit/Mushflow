@@ -30,6 +30,7 @@ export async function GET(
     
     // Get room metadata
     const roomResult = await docClient.send(new GetCommand({
+
       TableName: MAIN_TABLE_NAME,
       Key: {
         PK: `ROOM#${roomId}`,
@@ -49,6 +50,7 @@ export async function GET(
     
     const participantResult = await docClient.send(new GetCommand({
       TableName: MAIN_TABLE_NAME,
+
       Key: participantKey
     }));
     
@@ -58,6 +60,7 @@ export async function GET(
     
     // Get all participants
     const participantsResult = await docClient.send(new QueryCommand({
+
       TableName: MAIN_TABLE_NAME,
       KeyConditionExpression: 'PK = :pk AND begins_with(SK, :sk)',
       ExpressionAttributeValues: {
@@ -78,6 +81,7 @@ export async function GET(
       Limit: 50
     }));
     
+
     // Get current track if there is one from the tracks table
     let currentTrack = null;
     if (roomResult.Item.currentTrackId) {

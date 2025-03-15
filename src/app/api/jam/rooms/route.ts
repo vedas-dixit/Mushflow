@@ -36,7 +36,6 @@ const TRACKS_TABLE_NAME = process.env.TRACKS_DYNAMODB_TABLE || 'MushflowTracks';
 const CHAT_TABLE_NAME = process.env.CHAT_DYNAMODB_TABLE || 'MushflowChat';
 // Main table name
 const MAIN_TABLE_NAME = process.env.DYNAMODB_TABLE;
-
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -105,6 +104,7 @@ export async function POST(request: NextRequest) {
     
     const timestamp = new Date().toISOString();
     
+
     // Get a default track from the tracks table
     const tracksResult = await docClient.send(new QueryCommand({
       TableName: TRACKS_TABLE_NAME,
@@ -117,7 +117,6 @@ export async function POST(request: NextRequest) {
     }));
     
     const defaultTrack = tracksResult.Items && tracksResult.Items.length > 0 ? tracksResult.Items[0] : null;
-    
     // Create the room
     const room = {
       PK: `ROOM#${roomId}`,
@@ -144,6 +143,7 @@ export async function POST(request: NextRequest) {
     
     // Add room code to GSI for uniqueness check
     await docClient.send(new PutCommand({
+
       TableName: MAIN_TABLE_NAME,
       Item: {
         PK: `ROOM_CODE#${roomCode}`,
@@ -157,6 +157,7 @@ export async function POST(request: NextRequest) {
     // Add the creator as a participant
     const participantId = session.user.id;
     await docClient.send(new PutCommand({
+
       TableName: MAIN_TABLE_NAME,
       Item: {
         PK: `ROOM#${roomId}`,
@@ -201,9 +202,11 @@ export async function POST(request: NextRequest) {
         bannerId: bannerId || 1,
         createdAt: timestamp,
         createdBy: session.user.id,
+
         createdByName: session.user.name,
         currentTrackId: defaultTrack ? defaultTrack.id : null,
         currentTrackTitle: defaultTrack ? defaultTrack.title : null
+
       }
     });
   } catch (error) {
