@@ -11,7 +11,6 @@
     "setup-aws-db": "node src/scripts/setupAWSDynamoDB.js",
     "delete-aws-db": "node src/scripts/delete.js",
     "setup-tracks-db": "node src/scripts/setupTracksTable.js"
-    "delete-aws-db": "node src/scripts/delete.js"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.758.0",
