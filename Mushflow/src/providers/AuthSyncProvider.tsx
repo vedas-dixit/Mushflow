@@ -22,9 +22,9 @@ export default function AuthSyncProvider({
     if (session?.user) {
       dispatch(setUser({
         id: session.user.id || 'anonymous',
-        name: session.user.name,
-        email: session.user.email,
-        image: session.user.image,
+        name: session.user.name || null,
+        email: session.user.email || null,
+        image: session.user.image || null,
       }));
     } else if (status === 'unauthenticated') {
       dispatch(setUser(null));
