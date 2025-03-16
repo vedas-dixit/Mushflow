@@ -188,15 +188,6 @@ export default function JamSelection({
         </div>
       </div>
 
-      {/* Link to RTM Test Page */}
-      <div className="absolute bottom-4 right-4">
-        <Link 
-          href="/test" 
-          className="text-xs text-neutral-500 hover:text-amber-500 transition-colors"
-        >
-          RTM Test Page
-        </Link>
-      </div>
 
       {showCreateModal && (
         <CreateRoomModal
