@@ -34,7 +34,7 @@ const AboutSection: React.FC<AboutSectionProps> = ({
           </div>
           
           <a 
-            href="https://github.com/vedasjad/Mushflow" 
+            href="https://github.com/vedas-dixit" 
             target="_blank" 
             rel="noopener noreferrer"
             className="flex items-center justify-between text-sm mt-4 text-amber-500 hover:text-amber-400 transition-colors"
