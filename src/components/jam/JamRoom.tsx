@@ -109,11 +109,24 @@ export default function JamRoom({
   // Handle track change
   const handleChangeTrack = async (trackId: string) => {
     try {
+      console.log('Changing track to:', trackId);
+      
+      // Find the track in available tracks
+      const track = jamState.availableTracks.find(t => t.id === trackId);
+      if (!track) {
+        console.error('Track not found:', trackId);
+        return;
+      }
+      
+      console.log('Found track:', track.title, 'by', track.artist);
+      
       // Send track change command via RTM
+      console.log('Sending track change via RTM...');
       const rtmSuccess = await rtm.sendPlaybackCommand('CHANGE_TRACK', trackId);
       
       // If RTM fails, fall back to API
       if (!rtmSuccess) {
+        console.log('RTM failed, falling back to API');
         await dispatch(controlPlayback({
           roomId,
           action: 'CHANGE_TRACK',

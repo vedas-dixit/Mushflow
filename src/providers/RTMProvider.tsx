@@ -31,10 +31,33 @@ interface RTMProviderProps {
   children: ReactNode;
 }
 
+interface Participant {
+  id: string;
+  name: string;
+  isActive: boolean;
+  joinedAt: string;
+}
+
+interface Track {
+  id: string;
+  title: string;
+  artist: string;
+  duration: number;
+  url: string;
+  attribution: string;
+}
+
+interface PlaybackState {
+  isPlaying: boolean;
+  currentTrack: Track | null;
+  trackStartTime: string | null;
+}
+
 export function RTMProvider({ children }: RTMProviderProps) {
   const [client, setClient] = useState<any>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [currentRoomId, setCurrentRoomId] = useState<string | null>(null);
+  const [participants, setParticipants] = useState<Participant[]>([]);
   
   const dispatch = useAppDispatch();
   const { data: session } = useSession();
@@ -132,6 +155,14 @@ export function RTMProvider({ children }: RTMProviderProps) {
       return;
     }
     
+    // If we're already connected to a channel, leave it first
+    if (currentRoomId) {
+      console.log('Already connected to a channel, leaving it first');
+      await leaveChannel();
+      // Wait a moment for the channel to be properly left
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    
     try {
       console.log('Joining RTM channel for room:', roomId);
       console.log('RTM client instance:', client);
@@ -174,21 +205,53 @@ export function RTMProvider({ children }: RTMProviderProps) {
             // Handle different message types
             if (parsedMessage.type === 'USER_MESSAGE' || parsedMessage.type === 'SYSTEM_MESSAGE') {
               console.log('Processing message:', parsedMessage);
-              dispatch(addMessage({
-                id: parsedMessage.id,
-                senderId: parsedMessage.senderId,
-                senderName: parsedMessage.senderName,
-                content: parsedMessage.content,
-                timestamp: parsedMessage.timestamp,
-                type: parsedMessage.type
-              }));
+              
+              // Only add messages from other users to avoid duplicates
+              // We already added our own messages in sendChannelMessage
+              if (parsedMessage.senderId !== userId) {
+                dispatch(addMessage({
+                  id: parsedMessage.id,
+                  senderId: parsedMessage.senderId,
+                  senderName: parsedMessage.senderName,
+                  content: parsedMessage.content,
+                  timestamp: parsedMessage.timestamp,
+                  type: parsedMessage.type
+                }));
+              }
             } else if (parsedMessage.type === 'PLAYBACK_COMMAND') {
               console.log('Processing playback command:', parsedMessage);
-              dispatch(updatePlaybackState({
-                isPlaying: parsedMessage.isPlaying,
-                currentTrack: parsedMessage.currentTrack,
-                trackStartTime: parsedMessage.trackStartTime
-              }));
+              
+              // Only process commands from other users to avoid duplicates
+              if (parsedMessage.senderId !== userId) {
+                if (parsedMessage.action === 'CHANGE_TRACK') {
+                  if (parsedMessage.track) {
+                    dispatch(updatePlaybackState({
+                      isPlaying: true,
+                      currentTrack: parsedMessage.track,
+                      trackStartTime: parsedMessage.timestamp
+                    }));
+                  } else if (parsedMessage.trackId) {
+                    // If we don't have the track object, try to find it in the Redux store
+                    const state = (window as any).__REDUX_STORE__?.getState();
+                    if (state?.jam?.availableTracks) {
+                      const track = state.jam.availableTracks.find((t: any) => t.id === parsedMessage.trackId);
+                      if (track) {
+                        dispatch(updatePlaybackState({
+                          isPlaying: true,
+                          currentTrack: track,
+                          trackStartTime: parsedMessage.timestamp
+                        }));
+                      }
+                    }
+                  }
+                } else {
+                  dispatch(updatePlaybackState({
+                    isPlaying: parsedMessage.action === 'PLAY',
+                    currentTrack: parsedMessage.track || null,
+                    trackStartTime: parsedMessage.action === 'PLAY' ? parsedMessage.timestamp : null
+                  }));
+                }
+              }
             }
           }
         } catch (error) {
@@ -198,12 +261,101 @@ export function RTMProvider({ children }: RTMProviderProps) {
       
       const presenceHandler = (event: any) => {
         console.log('Presence event:', event);
+        
         if (event.eventType === "SNAPSHOT") {
           console.log('Joined channel, users present:', event.snapshot);
+          
+          // Convert snapshot to participants
+          const newParticipants: Participant[] = event.snapshot.map((user: any) => ({
+            id: user.userId,
+            name: user.userName,
+            isActive: true,
+            joinedAt: new Date().toISOString()
+          }));
+          
+          // Update local state
+          setParticipants(newParticipants);
+          dispatch(updateParticipants(newParticipants));
+          
+          // Send a system message that we joined
+          if (client && currentRoomId) {
+            const joinMessage = {
+              type: 'SYSTEM_MESSAGE',
+              id: Date.now().toString(),
+              senderId: 'system',
+              senderName: 'System',
+              content: `${userName} joined the room`,
+              timestamp: new Date().toISOString()
+            };
+            
+            // Add to our own state
+            dispatch(addMessage({
+              id: joinMessage.id,
+              senderId: joinMessage.senderId,
+              senderName: joinMessage.senderName,
+              content: joinMessage.content,
+              timestamp: joinMessage.timestamp,
+              type: 'SYSTEM_MESSAGE'
+            }));
+            
+            // Send to others
+            client.publish(currentRoomId, JSON.stringify(joinMessage))
+              .catch((err: Error) => console.error('Error sending join message:', err));
+          }
         } else if (event.type === "REMOTE_JOIN") {
           console.log('User joined:', event.publisher);
+          
+          // Create new participant
+          const newParticipant: Participant = {
+            id: event.publisher.userId,
+            name: event.publisher.userName,
+            isActive: true,
+            joinedAt: new Date().toISOString()
+          };
+          
+          // Update participants list
+          const updatedParticipants = [...participants, newParticipant];
+          setParticipants(updatedParticipants);
+          dispatch(updateParticipants(updatedParticipants));
+          
+          // No need to send a system message here as the joining user will send one
         } else if (event.type === "REMOTE_LEAVE") {
           console.log('User left:', event.publisher);
+          
+          // Get user name before removing from participants
+          const leavingUser = participants.find(p => p.id === event.publisher.userId);
+          const userName = leavingUser?.name || event.publisher.userName || 'Someone';
+          
+          // Update participants list
+          const updatedParticipants = participants.filter(p => p.id !== event.publisher.userId);
+          setParticipants(updatedParticipants);
+          dispatch(updateParticipants(updatedParticipants));
+          
+          // Send system message for user leaving
+          if (client && currentRoomId) {
+            const leaveMessage = {
+              type: 'SYSTEM_MESSAGE',
+              id: Date.now().toString(),
+              senderId: 'system',
+              senderName: 'System',
+              content: `${userName} left the room`,
+              timestamp: new Date().toISOString()
+            };
+            
+            // Add to our own state
+            dispatch(addMessage({
+              id: leaveMessage.id,
+              senderId: leaveMessage.senderId,
+              senderName: leaveMessage.senderName,
+              content: leaveMessage.content,
+              timestamp: leaveMessage.timestamp,
+              type: 'SYSTEM_MESSAGE'
+            }));
+            
+            // Send to others
+            client.publish(currentRoomId, JSON.stringify(leaveMessage))
+              .catch((err: Error) => console.error('Error sending leave message:', err));
+          }
         }
       };
       
@@ -272,20 +424,44 @@ export function RTMProvider({ children }: RTMProviderProps) {
       console.error('Error joining RTM channel:', error);
       setIsConnected(false);
       dispatch(setRTMConnected(false));
+      throw error; // Re-throw to allow caller to handle
     }
   };
   
   // Leave the channel
   const leaveChannel = async () => {
     if (!client || !currentRoomId) {
+      console.log('No active RTM connection to leave');
       return;
     }
     
     try {
       console.log('Unsubscribing from RTM channel:', currentRoomId);
+      
+      // Send a message that we're leaving
+      try {
+        const leaveMessage = {
+          type: 'SYSTEM_MESSAGE',
+          id: Date.now().toString(),
+          senderId: 'system',
+          senderName: 'System',
+          content: `${userName} left the room`,
+          timestamp: new Date().toISOString()
+        };
+        await client.publish(currentRoomId, JSON.stringify(leaveMessage));
+        console.log('Sent leave message');
+      } catch (publishError) {
+        console.error('Error sending leave message:', publishError);
+      }
+      
+      // Unsubscribe from the channel
       await client.unsubscribe(currentRoomId);
+      console.log('Successfully unsubscribed from channel');
+      
+      // Logout from RTM
       console.log('Logging out of RTM...');
       await client.logout();
+      console.log('Successfully logged out of RTM');
       
       setCurrentRoomId(null);
       setIsConnected(false);
@@ -294,6 +470,13 @@ export function RTMProvider({ children }: RTMProviderProps) {
       console.log('Successfully left RTM channel');
     } catch (error) {
       console.error('Error leaving RTM channel:', error);
+      
+      // Force reset state even if there was an error
+      setCurrentRoomId(null);
+      setIsConnected(false);
+      dispatch(setRTMConnected(false));
+      
+      throw error; // Re-throw to allow caller to handle
     }
   };
   
@@ -321,15 +504,21 @@ export function RTMProvider({ children }: RTMProviderProps) {
       await client.publish(currentRoomId, JSON.stringify(messageData));
       console.log('Message sent successfully');
       
-      // Add the message to our own state as well
-      dispatch(addMessage({
-        id: messageId,
-        senderId: userId,
-        senderName: userName,
-        content,
-        timestamp,
-        type: messageType
-      }));
+      // Only dispatch local messages for the sender
+      if (messageType === 'USER_MESSAGE') {
+        // Call the API to persist the message
+        try {
+          await fetch(`/api/jam/rooms/${currentRoomId}/messages`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(messageData),
+          });
+        } catch (error) {
+          console.error('Error persisting message:', error);
+        }
+      }
       
       return true;
     } catch (error) {
@@ -346,17 +535,56 @@ export function RTMProvider({ children }: RTMProviderProps) {
     }
     
     try {
+      const timestamp = new Date().toISOString();
+      
+      // For CHANGE_TRACK, we need to find the track object
+      let track = null;
+      if (action === 'CHANGE_TRACK' && trackId) {
+        // Get the track from the Redux store
+        const state = (window as any).__REDUX_STORE__?.getState();
+        if (state?.jam?.availableTracks) {
+          track = state.jam.availableTracks.find((t: any) => t.id === trackId);
+        }
+        
+        if (!track) {
+          console.error('Track not found:', trackId);
+          return false;
+        }
+      } else if (action !== 'CHANGE_TRACK') {
+        // For PLAY/PAUSE, get the current track from the store
+        const state = (window as any).__REDUX_STORE__?.getState();
+        if (state?.jam?.currentTrack) {
+          track = state.jam.currentTrack;
+        }
+      }
+      
       const commandData = {
         type: 'PLAYBACK_COMMAND',
         action,
-        trackId,
+        trackId: track?.id || trackId,
+        track,
         senderId: userId,
-        timestamp: new Date().toISOString()
+        timestamp
       };
       
       console.log('Sending RTM playback command:', commandData);
       await client.publish(currentRoomId, JSON.stringify(commandData));
       console.log('Playback command sent successfully');
+      
+      // Update local state immediately
+      if (action === 'CHANGE_TRACK' && track) {
+        dispatch(updatePlaybackState({
+          isPlaying: true,
+          currentTrack: track,
+          trackStartTime: timestamp
+        }));
+      } else {
+        dispatch(updatePlaybackState({
+          isPlaying: action === 'PLAY',
+          currentTrack: track || null,
+          trackStartTime: action === 'PLAY' ? timestamp : null
+        }));
+      }
       
       // Also send to the server for persistence
       console.log('Sending playback command to server for persistence');
@@ -365,7 +593,10 @@ export function RTMProvider({ children }: RTMProviderProps) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ action, trackId }),
+        body: JSON.stringify({
+          action,
+          trackId: track?.id || trackId
+        }),
       });
       
       return true;

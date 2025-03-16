@@ -34,8 +34,17 @@ export default function MusicPlayer({
   useEffect(() => {
     if (!audioRef.current) return;
     
+    console.log('Playback state changed:', isPlaying ? 'Playing' : 'Paused');
+    
     if (isPlaying) {
-      audioRef.current.play().catch(err => console.error('Error playing audio:', err));
+      audioRef.current.play()
+        .catch(err => {
+          console.error('Error playing audio:', err);
+          // If autoplay is blocked, we need to handle it gracefully
+          if (err.name === 'NotAllowedError') {
+            console.log('Autoplay blocked by browser, waiting for user interaction');
+          }
+        });
     } else {
       audioRef.current.pause();
     }
@@ -58,6 +67,14 @@ export default function MusicPlayer({
     const serverNow = Date.now();
     const elapsedSinceStart = (serverNow - serverStartTime) / 1000;
     
+    console.log('Syncing playback:', {
+      track: track.title,
+      serverStartTime,
+      serverNow,
+      elapsedSinceStart,
+      trackDuration: track.duration
+    });
+    
     // If the track should still be playing
     if (elapsedSinceStart < track.duration) {
       // Set the current time to the elapsed time
@@ -65,10 +82,44 @@ export default function MusicPlayer({
       
       // Play if isPlaying is true
       if (isPlaying) {
-        audio.play().catch(err => console.error('Error playing audio:', err));
+        audio.play().catch(err => {
+          console.error('Error playing audio:', err);
+          // If autoplay is blocked, we need to handle it gracefully
+          if (err.name === 'NotAllowedError') {
+            console.log('Autoplay blocked by browser, waiting for user interaction');
+          }
+        });
+      }
+    } else {
+      console.log('Track should have ended, resetting to beginning');
+      audio.currentTime = 0;
+      if (isPlaying) {
+        audio.play().catch(err => {
+          console.error('Error playing audio:', err);
+          // If autoplay is blocked, we need to handle it gracefully
+          if (err.name === 'NotAllowedError') {
+            console.log('Autoplay blocked by browser, waiting for user interaction');
+          }
+        });
       }
     }
   }, [track, trackStartTime, isPlaying]);
+  
+  // Add a listener for audio errors
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    
+    const handleError = (e: ErrorEvent) => {
+      console.error('Audio error:', e);
+    };
+    
+    audio.addEventListener('error', handleError as any);
+    
+    return () => {
+      audio.removeEventListener('error', handleError as any);
+    };
+  }, []);
   
   // Get volume icon based on level
   const getVolumeIcon = () => {

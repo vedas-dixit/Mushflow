@@ -17,10 +17,18 @@ import {
 import { showLogin } from '@/redux/features/authSlice';
 import { useRTM } from '@/providers/RTMProvider';
 
+interface AuthState {
+  user: {
+    id: string;
+    name: string;
+  } | null;
+  status: 'loading' | 'authenticated' | 'unauthenticated';
+}
+
 export default function JamPage() {
   const dispatch = useAppDispatch();
   const jamState = useAppSelector(state => state.jam) as JamState;
-  const { user, status } = useAppSelector(state => state.auth);
+  const { user, status } = useAppSelector(state => state.auth) as AuthState;
   const rtm = useRTM();
 
   // Handle leaving a room
@@ -64,9 +72,24 @@ export default function JamPage() {
         // Initialize RTM connection
         console.log("Initializing RTM connection for room:", roomId);
         try {
+          // First ensure we're not already connected
+          if (rtm.isConnected) {
+            console.log("Already connected to RTM, leaving current channel first");
+            await rtm.leaveChannel();
+            // Wait a moment for the channel to be properly left
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
+          
+          // Join the new channel
           await rtm.joinChannel(roomId);
           console.log("Successfully joined RTM channel for room:", roomId);
           dispatch(setRTMConnected(true));
+          
+          // Fetch room details again after joining to ensure we have the latest data
+          setTimeout(() => {
+            console.log("Fetching room details again after joining RTM");
+            dispatch(fetchRoomDetails(roomId));
+          }, 1000);
         } catch (rtmError) {
           console.error("Failed to join RTM channel:", rtmError);
           dispatch(setRTMConnected(false));
