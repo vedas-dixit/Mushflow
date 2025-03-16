@@ -454,6 +454,16 @@ export function RTMProvider({ children }: RTMProviderProps) {
       
       // Only dispatch local messages for the sender
       if (messageType === 'USER_MESSAGE') {
+        // Add the message to the Redux store for the sender
+        dispatch(addMessage({
+          id: messageId,
+          senderId: userId,
+          senderName: userName,
+          content,
+          timestamp,
+          type: messageType
+        }));
+        
         // Call the API to persist the message
         try {
           await fetch(`/api/jam/rooms/${currentRoomId}/messages`, {
