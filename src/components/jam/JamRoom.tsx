@@ -51,6 +51,18 @@ export default function JamRoom({
     return () => clearInterval(intervalId);
   }, [roomId, dispatch, jamState.rtmConnected]);
   
+  // Debug log for participant changes
+  useEffect(() => {
+    console.log("Participants updated:", jamState.participants);
+    console.log("Participant details:", jamState.participants.map(p => ({
+      id: p.id,
+      name: p.name,
+      isActive: p.isActive,
+      joinedAt: p.joinedAt
+    })));
+    console.log("Total participants:", jamState.participants.length);
+  }, [jamState.participants]);
+  
   // Handle sending a new message
   const handleSendMessage = async (content: string) => {
     if (!content.trim()) return;

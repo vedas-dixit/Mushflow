@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import AgoraRTM from 'agora-rtm-sdk';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
-import { addMessage, updateParticipants, updatePlaybackState, setRTMConnected } from '@/redux/features/jamSlice';
+import { addMessage, updateParticipants, updatePlaybackState, setRTMConnected, addParticipant, removeParticipant, fetchRoomDetails } from '@/redux/features/jamSlice';
 import { useSession } from 'next-auth/react';
 
 // Define the RTM context type
@@ -13,6 +13,7 @@ interface RTMContextType {
   leaveChannel: () => Promise<void>;
   sendChannelMessage: (content: string, messageType: 'USER_MESSAGE' | 'SYSTEM_MESSAGE') => Promise<boolean>;
   sendPlaybackCommand: (action: 'PLAY' | 'PAUSE' | 'CHANGE_TRACK', trackId?: string) => Promise<boolean>;
+  sendParticipantUpdate: (action: 'JOIN' | 'LEAVE', roomId?: string) => Promise<boolean>;
 }
 
 // Create the context with a default value
@@ -22,6 +23,7 @@ const RTMContext = createContext<RTMContextType>({
   leaveChannel: async () => {},
   sendChannelMessage: async () => false,
   sendPlaybackCommand: async () => false,
+  sendParticipantUpdate: async () => false,
 });
 
 // Custom hook to use the RTM context
@@ -200,7 +202,11 @@ export function RTMProvider({ children }: RTMProviderProps) {
         console.log('Received channel message:', event);
         try {
           if (typeof event.message === 'string') {
+            // Log the raw message for debugging
+            console.log('Raw message string:', event.message);
+            
             const parsedMessage = JSON.parse(event.message);
+            console.log('Parsed message:', parsedMessage);
             
             // Handle different message types
             if (parsedMessage.type === 'USER_MESSAGE' || parsedMessage.type === 'SYSTEM_MESSAGE') {
@@ -217,6 +223,23 @@ export function RTMProvider({ children }: RTMProviderProps) {
                   timestamp: parsedMessage.timestamp,
                   type: parsedMessage.type
                 }));
+              }
+            } else if (parsedMessage.type === 'PARTICIPANT_UPDATE') {
+              console.log('Processing participant update:', parsedMessage);
+              
+              // Only process updates from other users to avoid duplicates
+              if (parsedMessage.senderId !== userId) {
+                const { action, participant } = parsedMessage;
+                
+                if (action === 'JOIN') {
+                  console.log('Adding participant to list:', participant);
+                  dispatch(addParticipant(participant));
+                } else if (action === 'LEAVE') {
+                  console.log('Removing participant from list:', participant.id);
+                  dispatch(removeParticipant(participant.id));
+                }
+              } else {
+                console.log('Ignoring participant update from self');
               }
             } else if (parsedMessage.type === 'PLAYBACK_COMMAND') {
               console.log('Processing playback command:', parsedMessage);
@@ -256,6 +279,7 @@ export function RTMProvider({ children }: RTMProviderProps) {
           }
         } catch (error) {
           console.error('Error parsing RTM message:', error);
+          console.error('Raw message that caused error:', event.message);
         }
       };
       
@@ -302,60 +326,12 @@ export function RTMProvider({ children }: RTMProviderProps) {
             client.publish(currentRoomId, JSON.stringify(joinMessage))
               .catch((err: Error) => console.error('Error sending join message:', err));
           }
-        } else if (event.type === "REMOTE_JOIN") {
-          console.log('User joined:', event.publisher);
-          
-          // Create new participant
-          const newParticipant: Participant = {
-            id: event.publisher.userId,
-            name: event.publisher.userName,
-            isActive: true,
-            joinedAt: new Date().toISOString()
-          };
-          
-          // Update participants list
-          const updatedParticipants = [...participants, newParticipant];
-          setParticipants(updatedParticipants);
-          dispatch(updateParticipants(updatedParticipants));
-          
-          // No need to send a system message here as the joining user will send one
-        } else if (event.type === "REMOTE_LEAVE") {
-          console.log('User left:', event.publisher);
-          
-          // Get user name before removing from participants
-          const leavingUser = participants.find(p => p.id === event.publisher.userId);
-          const userName = leavingUser?.name || event.publisher.userName || 'Someone';
-          
-          // Update participants list
-          const updatedParticipants = participants.filter(p => p.id !== event.publisher.userId);
-          setParticipants(updatedParticipants);
-          dispatch(updateParticipants(updatedParticipants));
-          
-          // Send system message for user leaving
-          if (client && currentRoomId) {
-            const leaveMessage = {
-              type: 'SYSTEM_MESSAGE',
-              id: Date.now().toString(),
-              senderId: 'system',
-              senderName: 'System',
-              content: `${userName} left the room`,
-              timestamp: new Date().toISOString()
-            };
-            
-            // Add to our own state
-            dispatch(addMessage({
-              id: leaveMessage.id,
-              senderId: leaveMessage.senderId,
-              senderName: leaveMessage.senderName,
-              content: leaveMessage.content,
-              timestamp: leaveMessage.timestamp,
-              type: 'SYSTEM_MESSAGE'
-            }));
-            
-            // Send to others
-            client.publish(currentRoomId, JSON.stringify(leaveMessage))
-              .catch((err: Error) => console.error('Error sending leave message:', err));
-          }
+        } else if (event.eventType === "REMOTE_JOIN") {
+          console.log('User joined (REMOTE_JOIN):', event.publisher);
+          // We'll handle this through the PARTICIPANT_UPDATE message
+        } else if (event.eventType === "REMOTE_LEAVE") {
+          console.log('User left (REMOTE_LEAVE):', event.publisher);
+          // We'll handle this through the PARTICIPANT_UPDATE message
         }
       };
       
@@ -387,96 +363,68 @@ export function RTMProvider({ children }: RTMProviderProps) {
       // Subscribe to the channel
       console.log('Subscribing to channel:', roomId);
       try {
-        console.log('Subscribe method exists:', typeof client.subscribe);
-        const subscribeResult = await client.subscribe(roomId);
-        console.log('Channel subscription successful:', subscribeResult);
+        await client.subscribe(roomId);
+        console.log('Successfully subscribed to channel:', roomId);
+        
+        // Set the current room ID and connection state
+        setCurrentRoomId(roomId);
+        setIsConnected(true);
+        dispatch(setRTMConnected(true));
+        
+        // Log the client connection state
+        console.log('RTM client connection state after joining:', {
+          clientState: client._connectionState,
+          isConnectedState: true
+        });
+        
+        // Note: We don't add ourselves to the participants list here anymore
+        // This will be handled by the sendParticipantUpdate method when called with 'JOIN'
+        // This prevents duplicate entries and ensures consistent behavior
+        
+        console.log('Successfully joined channel:', roomId);
       } catch (subscribeError) {
-        console.error('Channel subscription failed:', subscribeError);
+        console.error('Error subscribing to channel:', subscribeError);
         throw subscribeError;
       }
-      
-      // Store the channel ID
-      setCurrentRoomId(roomId);
-      
-      console.log('Successfully subscribed to RTM channel:', roomId);
-      setIsConnected(true);
-      dispatch(setRTMConnected(true));
-      
-      // Send a test message to verify the connection
-      console.log('Sending test message to verify connection...');
-      try {
-        console.log('Publish method exists:', typeof client.publish);
-        const testMessage = JSON.stringify({
-          type: 'SYSTEM_MESSAGE',
-          id: Date.now().toString(),
-          senderId: 'system',
-          senderName: 'System',
-          content: `${userName} connected to RTM`,
-          timestamp: new Date().toISOString()
-        });
-        console.log('Test message content:', testMessage);
-        await client.publish(roomId, testMessage);
-        console.log('Test message sent successfully');
-      } catch (publishError) {
-        console.error('Failed to send test message:', publishError);
-      }
     } catch (error) {
-      console.error('Error joining RTM channel:', error);
+      console.error('Error joining channel:', error);
       setIsConnected(false);
       dispatch(setRTMConnected(false));
-      throw error; // Re-throw to allow caller to handle
+      throw error;
     }
   };
   
-  // Leave the channel
+  // Leave a channel
   const leaveChannel = async () => {
-    if (!client || !currentRoomId) {
-      console.log('No active RTM connection to leave');
+    if (!client || !isConnected || !currentRoomId) {
+      console.log('Not connected to any channel, nothing to leave');
       return;
     }
     
     try {
-      console.log('Unsubscribing from RTM channel:', currentRoomId);
+      console.log('Leaving RTM channel:', currentRoomId);
       
-      // Send a message that we're leaving
-      try {
-        const leaveMessage = {
-          type: 'SYSTEM_MESSAGE',
-          id: Date.now().toString(),
-          senderId: 'system',
-          senderName: 'System',
-          content: `${userName} left the room`,
-          timestamp: new Date().toISOString()
-        };
-        await client.publish(currentRoomId, JSON.stringify(leaveMessage));
-        console.log('Sent leave message');
-      } catch (publishError) {
-        console.error('Error sending leave message:', publishError);
-      }
+      // Remove ourselves from the participants list
+      dispatch(removeParticipant(userId));
       
       // Unsubscribe from the channel
       await client.unsubscribe(currentRoomId);
-      console.log('Successfully unsubscribed from channel');
+      console.log('Successfully unsubscribed from channel:', currentRoomId);
       
-      // Logout from RTM
-      console.log('Logging out of RTM...');
-      await client.logout();
-      console.log('Successfully logged out of RTM');
-      
+      // Clear the current room ID and connection state
       setCurrentRoomId(null);
+      setParticipants([]);
       setIsConnected(false);
       dispatch(setRTMConnected(false));
       
-      console.log('Successfully left RTM channel');
+      console.log('Successfully left channel');
     } catch (error) {
-      console.error('Error leaving RTM channel:', error);
-      
-      // Force reset state even if there was an error
+      console.error('Error leaving channel:', error);
+      // Still clear the state even if there was an error
       setCurrentRoomId(null);
+      setParticipants([]);
       setIsConnected(false);
       dispatch(setRTMConnected(false));
-      
-      throw error; // Re-throw to allow caller to handle
     }
   };
   
@@ -606,6 +554,63 @@ export function RTMProvider({ children }: RTMProviderProps) {
     }
   };
   
+  // Send a participant update (join/leave)
+  const sendParticipantUpdate = async (action: 'JOIN' | 'LEAVE', roomIdParam?: string) => {
+    // Use the provided roomId parameter or fall back to the state variable
+    const targetRoomId = roomIdParam || currentRoomId;
+    
+    if (!client) {
+      console.error('Cannot send participant update: RTM client is not initialized');
+      return false;
+    }
+    
+    if (!targetRoomId) {
+      console.error('Cannot send participant update: No room ID provided');
+      return false;
+    }
+    
+    try {
+      const messageId = Date.now().toString();
+      const timestamp = new Date().toISOString();
+      
+      // Simple participant object
+      const participant = {
+        id: userId,
+        name: userName,
+        isActive: action === 'JOIN',
+        joinedAt: timestamp
+      };
+      
+      // Simple message structure - similar to playback commands
+      const messageData = {
+        type: 'PARTICIPANT_UPDATE',
+        id: messageId,
+        action,
+        participant,
+        senderId: userId,
+        timestamp
+      };
+      
+      console.log(`Sending ${action} participant update:`, messageData);
+      
+      // Publish directly
+      await client.publish(targetRoomId, JSON.stringify(messageData));
+      console.log('Participant update sent successfully');
+      
+      // Update local state immediately - just like playback commands
+      if (action === 'JOIN') {
+        dispatch(addParticipant(participant));
+      } else {
+        dispatch(removeParticipant(userId));
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error sending participant update:', error);
+      return false;
+    }
+  };
+  
   // Provide the RTM context
   const contextValue: RTMContextType = {
     isConnected,
@@ -613,10 +618,18 @@ export function RTMProvider({ children }: RTMProviderProps) {
     leaveChannel,
     sendChannelMessage,
     sendPlaybackCommand,
+    sendParticipantUpdate,
   };
   
   return (
-    <RTMContext.Provider value={contextValue}>
+    <RTMContext.Provider value={{
+      isConnected,
+      joinChannel,
+      leaveChannel,
+      sendChannelMessage,
+      sendPlaybackCommand,
+      sendParticipantUpdate
+    }}>
       {children}
     </RTMContext.Provider>
   );
