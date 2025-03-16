@@ -274,6 +274,8 @@ export function RTMProvider({ children }: RTMProviderProps) {
                     trackStartTime: parsedMessage.action === 'PLAY' ? parsedMessage.timestamp : null
                   }));
                 }
+              } else {
+                console.log('Ignoring playback command from self to avoid duplicate state updates');
               }
             }
           }
@@ -526,10 +528,8 @@ export function RTMProvider({ children }: RTMProviderProps) {
       };
       
       console.log('Sending RTM playback command:', commandData);
-      await client.publish(currentRoomId, JSON.stringify(commandData));
-      console.log('Playback command sent successfully');
       
-      // Update local state immediately
+      // First update local state to ensure UI responds immediately
       if (action === 'CHANGE_TRACK' && track) {
         dispatch(updatePlaybackState({
           isPlaying: true,
@@ -543,6 +543,10 @@ export function RTMProvider({ children }: RTMProviderProps) {
           trackStartTime: action === 'PLAY' ? timestamp : null
         }));
       }
+      
+      // Then send the command to RTM
+      await client.publish(currentRoomId, JSON.stringify(commandData));
+      console.log('Playback command sent successfully');
       
       // Also send to the server for persistence
       console.log('Sending playback command to server for persistence');

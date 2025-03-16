@@ -96,13 +96,17 @@ export default function JamRoom({
   // Handle play/pause toggle
   const handlePlayPause = async () => {
     try {
+      console.log('Toggling playback state:', jamState.isPlaying ? 'PAUSE' : 'PLAY');
+      
       // Send playback command via RTM
+      // The RTM provider will update the Redux state
       const rtmSuccess = await rtm.sendPlaybackCommand(
         jamState.isPlaying ? 'PAUSE' : 'PLAY'
       );
       
       // If RTM fails, fall back to API
       if (!rtmSuccess) {
+        console.log('RTM failed, falling back to API');
         await dispatch(controlPlayback({
           roomId,
           action: jamState.isPlaying ? 'PAUSE' : 'PLAY'
@@ -133,6 +137,7 @@ export default function JamRoom({
       console.log('Found track:', track.title, 'by', track.artist);
       
       // Send track change command via RTM
+      // The RTM provider will update the Redux state
       console.log('Sending track change via RTM...');
       const rtmSuccess = await rtm.sendPlaybackCommand('CHANGE_TRACK', trackId);
       
