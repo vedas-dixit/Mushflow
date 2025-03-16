@@ -28,7 +28,7 @@ export default function AgoraTest() {
         addLog('RTM constructor found');
         
         // Initialize RTM client
-        const appId = "065fc4b84f774499815dd029a02cd7a0";
+        const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID;
         const userId = "test-user-" + Date.now();
         
         addLog(`Initializing RTM client with App ID: ${appId} and User ID: ${userId}`);
@@ -37,7 +37,7 @@ export default function AgoraTest() {
         const { RTM } = AgoraRTM;
         
         // Create RTM client
-        const rtmClient = new RTM(appId, userId);
+        const rtmClient = new RTM(appId ? appId : "", userId);
         addLog(`RTM client created: ${!!rtmClient}`);
         addLog(`RTM client methods: ${Object.getOwnPropertyNames(Object.getPrototypeOf(rtmClient)).join(', ')}`);
         

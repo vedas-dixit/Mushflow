@@ -44,7 +44,7 @@ export function RTMProvider({ children }: RTMProviderProps) {
   // Initialize the RTM client
   useEffect(() => {
     // Only initialize if we have the Agora App ID
-    const appId = "065fc4b84f774499815dd029a02cd7a0";
+    const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID;
     if (!appId) {
       console.error('Agora App ID is not defined');
       return;
