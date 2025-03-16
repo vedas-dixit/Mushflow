@@ -34,8 +34,25 @@ export default function MusicPlayer({
   useEffect(() => {
     if (!audioRef.current) return;
     
+    console.log('Playback state changed:', isPlaying ? 'Playing' : 'Paused');
+    
     if (isPlaying) {
-      audioRef.current.play().catch(err => console.error('Error playing audio:', err));
+      // Use Promise to handle autoplay restrictions
+      const playPromise = audioRef.current.play();
+      
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            console.log('Audio playback started successfully');
+          })
+          .catch(err => {
+            console.error('Error playing audio:', err);
+            // If autoplay is blocked, we need to handle it gracefully
+            if (err.name === 'NotAllowedError') {
+              console.log('Autoplay blocked by browser, waiting for user interaction');
+            }
+          });
+      }
     } else {
       audioRef.current.pause();
     }
@@ -49,26 +66,82 @@ export default function MusicPlayer({
   
   // Sync playback position when track or startTime changes
   useEffect(() => {
-    if (!audioRef.current || !trackStartTime) return;
+    if (!audioRef.current || !track) return;
     
-    const audio = audioRef.current;
+    // When track changes, reset the audio source
+    audioRef.current.src = track.url;
     
-    // Calculate how many seconds into the track we should be
-    const serverStartTime = new Date(trackStartTime).getTime();
-    const serverNow = Date.now();
-    const elapsedSinceStart = (serverNow - serverStartTime) / 1000;
-    
-    // If the track should still be playing
-    if (elapsedSinceStart < track.duration) {
-      // Set the current time to the elapsed time
-      audio.currentTime = elapsedSinceStart;
+    // If we have a start time, sync the playback position
+    if (trackStartTime) {
+      const audio = audioRef.current;
       
-      // Play if isPlaying is true
-      if (isPlaying) {
-        audio.play().catch(err => console.error('Error playing audio:', err));
+      // Calculate how many seconds into the track we should be
+      const serverStartTime = new Date(trackStartTime).getTime();
+      const serverNow = Date.now();
+      const elapsedSinceStart = (serverNow - serverStartTime) / 1000;
+      
+      console.log('Syncing playback:', {
+        track: track.title,
+        serverStartTime,
+        serverNow,
+        elapsedSinceStart,
+        trackDuration: track.duration
+      });
+      
+      // If the track should still be playing
+      if (elapsedSinceStart < track.duration) {
+        // Set the current time to the elapsed time
+        audio.currentTime = elapsedSinceStart;
+        
+        // Play if isPlaying is true
+        if (isPlaying) {
+          const playPromise = audio.play();
+          
+          if (playPromise !== undefined) {
+            playPromise.catch(err => {
+              console.error('Error playing audio after sync:', err);
+              // If autoplay is blocked, we need to handle it gracefully
+              if (err.name === 'NotAllowedError') {
+                console.log('Autoplay blocked by browser, waiting for user interaction');
+              }
+            });
+          }
+        }
+      } else {
+        console.log('Track should have ended, resetting to beginning');
+        audio.currentTime = 0;
+        if (isPlaying) {
+          const playPromise = audio.play();
+          
+          if (playPromise !== undefined) {
+            playPromise.catch(err => {
+              console.error('Error playing audio after reset:', err);
+              // If autoplay is blocked, we need to handle it gracefully
+              if (err.name === 'NotAllowedError') {
+                console.log('Autoplay blocked by browser, waiting for user interaction');
+              }
+            });
+          }
+        }
       }
     }
   }, [track, trackStartTime, isPlaying]);
+  
+  // Add a listener for audio errors
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    
+    const handleError = (e: ErrorEvent) => {
+      console.error('Audio error:', e);
+    };
+    
+    audio.addEventListener('error', handleError as any);
+    
+    return () => {
+      audio.removeEventListener('error', handleError as any);
+    };
+  }, []);
   
   // Get volume icon based on level
   const getVolumeIcon = () => {

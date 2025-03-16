@@ -46,7 +46,7 @@ function CardBox({ tasks: initialTasks, onTaskUpdate, onTaskDelete }: CardBoxPro
     }
   };
   
-  console.log(`Rendering ${tasks.length} tasks`);
+  // console.log(`Rendering ${tasks.length} tasks`);
   
   // Get the current user ID
   const userId = session?.user?.id || "";
@@ -70,7 +70,7 @@ function CardBox({ tasks: initialTasks, onTaskUpdate, onTaskDelete }: CardBoxPro
         {tasks.map((task) => {
           // Ensure task has an ID and userId
           if (!task.id) {
-            console.warn("Task missing ID:", task);
+            // console.warn("Task missing ID:", task);
             return null;
           }
           

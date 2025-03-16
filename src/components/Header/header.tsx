@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, createContext, useContext, useRef } from 'react';
-import { Search, Settings, LayoutGrid, LogIn, LogOut, Music } from 'lucide-react';
+import { Search, LayoutGrid, LogIn, LogOut, Music } from 'lucide-react';
 import { LightbulbIcon, Bell, PencilLine, Archive, Trash } from 'lucide-react';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
@@ -9,8 +9,8 @@ import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { JamState } from '@/redux/features/jamSlice';
 import { setCurrentView } from '@/redux/features/navigationSlice';
 import { showLogin } from '@/redux/features/authSlice';
+import { SettingsButton } from '@/components/Settings';
 
-// Define types for our navigation items
 type NavItem = {
     id: string;
     icon: React.ReactNode;
@@ -19,7 +19,7 @@ type NavItem = {
     onClick?: () => void;
 };
 
-// Create a context for header state
+
 type HeaderContextType = {
     navItems: NavItem[];
     setNavItems: React.Dispatch<React.SetStateAction<NavItem[]>>;
@@ -157,15 +157,13 @@ const HeaderWithContext = () => {
                     </div>
                 </div>
 
-                <div className="flex items-center space-x-2">
-                    <button className="p-2 hover:bg-gray-100 rounded-full">
-                        <Settings className="w-6 h-6 text-gray-600" />
-                    </button>
+                <div className="flex items-center ">
+                    <SettingsButton />
                     <button className="p-2 hover:bg-gray-100 rounded-full">
                         <LayoutGrid className="w-6 h-6 text-gray-600" />
                     </button>
                     
-                    {isAuthenticated ? (
+                    {isAuthenticated && (
                         <div className="flex items-center space-x-2">
                             {session?.user?.image ? (
                                 <button 
@@ -181,17 +179,6 @@ const HeaderWithContext = () => {
                                             // e.currentTarget.src = "/default-avatar.png"; // Fallback image
                                         }}
                                     />
-                                    <div className="absolute right-0 top-full mt-1 w-32 bg-white shadow-lg rounded-md p-2 hidden group-hover:block">
-                                        <div className="text-sm text-gray-800 font-medium mb-1">{session.user.name}</div>
-                                        <div className="text-xs text-gray-500 mb-2">{session.user.email}</div>
-                                        <button 
-                                            onClick={() => signOut()} 
-                                            className="flex items-center text-sm text-red-600 hover:text-red-800"
-                                        >
-                                            <LogOut className="w-4 h-4 mr-1" />
-                                            Sign out
-                                        </button>
-                                    </div>
                                 </button>
                             ) : (
                                 <button 
@@ -202,14 +189,6 @@ const HeaderWithContext = () => {
                                 </button>
                             )}
                         </div>
-                    ) : (
-                        <button 
-                            onClick={() => signIn('google')}
-                            className="flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
-                        >
-                            <LogIn className="w-4 h-4 mr-1" />
-                            <span>Sign in</span>
-                        </button>
                     )}
                 </div>
             </div>
@@ -240,7 +219,7 @@ const HeaderWithContext = () => {
             </div>
 
             {/* Mobile bottom navigation - visible only on mobile */}
-            <div className="fixed bottom-0 left-0 right-0 bg-[#202124] text-gray-300 z-30 md:hidden">
+            <div className="fixed bottom-0 left-0 right-0 bg-[#202124] text-gray-300 z-10 md:hidden">
                 <nav className="flex justify-around">
                     {navItems.map((item) => (
                         <button 
@@ -325,9 +304,7 @@ function HeaderComponent() {
                 </div>
 
                 <div className="flex items-center space-x-2">
-                    <button className="p-2 hover:bg-gray-100 rounded-full">
-                        <Settings className="w-6 h-6 text-gray-600" />
-                    </button>
+                    <SettingsButton />
                     <button className="p-2 hover:bg-gray-100 rounded-full">
                         <LayoutGrid className="w-6 h-6 text-gray-600" />
                     </button>
@@ -403,7 +380,7 @@ function HeaderComponent() {
             </div>
 
             {/* Mobile bottom navigation - visible only on mobile */}
-            <div className="fixed bottom-0 left-0 right-0 bg-[#202124] text-gray-300 z-30 md:hidden">
+            <div className="fixed bottom-0 left-0 right-0 bg-[#202124] text-gray-300 z-10 md:hidden">
                 <nav className="flex justify-around">
                     {navItems.map((item) => (
                         <button 

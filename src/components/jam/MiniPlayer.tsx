@@ -6,11 +6,15 @@ import { useRouter } from 'next/navigation';
 import { useAppSelector, useAppDispatch } from '@/redux/hooks';
 import { JamState, setPlaybackState, setVolume, leaveRoom } from '@/redux/features/jamSlice';
 
+interface NavigationState {
+  currentView: string;
+}
+
 export default function MiniPlayer() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const jamState = useAppSelector(state => state.jam) as JamState;
-  const { currentView } = useAppSelector(state => state.navigation);
+  const { currentView } = useAppSelector(state => state.navigation) as NavigationState;
   const audioRef = useRef<HTMLAudioElement>(null);
   
   // Extract values from jamState safely
@@ -25,12 +29,37 @@ export default function MiniPlayer() {
   useEffect(() => {
     if (!audioRef.current || !currentTrack || !inRoom) return;
     
+    console.log('MiniPlayer - Playback state changed:', isPlaying ? 'Playing' : 'Paused');
+    
     if (isPlaying) {
-      audioRef.current.play().catch(err => console.error('Error playing audio:', err));
+      audioRef.current.play()
+        .catch(err => {
+          console.error('MiniPlayer - Error playing audio:', err);
+          // If autoplay is blocked, we need to handle it gracefully
+          if (err.name === 'NotAllowedError') {
+            console.log('MiniPlayer - Autoplay blocked by browser, waiting for user interaction');
+          }
+        });
     } else {
       audioRef.current.pause();
     }
   }, [isPlaying, currentTrack, inRoom]);
+  
+  // Add a listener for audio errors
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    
+    const handleError = (e: ErrorEvent) => {
+      console.error('MiniPlayer - Audio error:', e);
+    };
+    
+    audio.addEventListener('error', handleError as any);
+    
+    return () => {
+      audio.removeEventListener('error', handleError as any);
+    };
+  }, []);
   
   // Handle volume changes
   useEffect(() => {
@@ -45,8 +74,17 @@ export default function MiniPlayer() {
     const audio = audioRef.current;
     
     // Calculate how many seconds into the track we should be
+    const serverStartTime = new Date(trackStartTime).getTime();
     const serverNow = Date.now();
-    const elapsedSinceStart = (serverNow - trackStartTime) / 1000;
+    const elapsedSinceStart = (serverNow - serverStartTime) / 1000;
+    
+    console.log('MiniPlayer - Syncing playback:', {
+      track: currentTrack.title,
+      serverStartTime,
+      serverNow,
+      elapsedSinceStart,
+      trackDuration: currentTrack.duration
+    });
     
     // If the track should still be playing
     if (elapsedSinceStart < currentTrack.duration) {
@@ -57,11 +95,18 @@ export default function MiniPlayer() {
       if (isPlaying) {
         audio.play().catch(err => console.error('Error playing audio:', err));
       }
+    } else {
+      console.log('MiniPlayer - Track should have ended, resetting to beginning');
+      audio.currentTime = 0;
+      if (isPlaying) {
+        audio.play().catch(err => console.error('Error playing audio:', err));
+      }
     }
   }, [currentTrack, trackStartTime, isPlaying, inRoom]);
   
   // Handle play/pause toggle
   const handlePlayPause = () => {
+    console.log('MiniPlayer - Toggle playback:', !isPlaying);
     dispatch(setPlaybackState(!isPlaying));
   };
   

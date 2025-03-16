@@ -13,6 +13,7 @@ import {
   joinRoom, 
   fetchRooms 
 } from '@/redux/features/jamSlice';
+import Link from 'next/link';
 
 interface JamSelectionProps {
   onRoomCreated: (roomId: string, roomCode: string, roomName: string, bannerId: number) => void;
@@ -86,7 +87,7 @@ export default function JamSelection({
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen p-4">
+    <div className="flex flex-col items-center justify-center h-screen p-4 relative">
       <div className="w-full max-w-md bg-neutral-800 rounded-xl shadow-xl overflow-hidden">
         <div className="p-8">
           <div className="text-center mb-8">
@@ -186,6 +187,7 @@ export default function JamSelection({
           )}
         </div>
       </div>
+
 
       {showCreateModal && (
         <CreateRoomModal

@@ -73,6 +73,9 @@ export interface JamState {
   isSendingMessage: boolean;
   isChangingTrack: boolean;
   error: string | null;
+  
+  // RTM state
+  rtmConnected: boolean;
 }
 
 // Define the initial state
@@ -111,6 +114,9 @@ const initialState: JamState = {
   isSendingMessage: false,
   isChangingTrack: false,
   error: null,
+  
+  // RTM state
+  rtmConnected: false,
 };
 
 // Async thunks
@@ -358,6 +364,25 @@ export const jamSlice = createSlice({
     setError: (state, action: PayloadAction<string | null>) => {
       state.error = action.payload;
     },
+    
+    // RTM actions
+    updateParticipants: (state, action: PayloadAction<Participant[]>) => {
+      state.participants = action.payload;
+    },
+    
+    updatePlaybackState: (state, action: PayloadAction<{
+      isPlaying: boolean;
+      currentTrack: Track | null;
+      trackStartTime: string | null;
+    }>) => {
+      state.isPlaying = action.payload.isPlaying;
+      state.currentTrack = action.payload.currentTrack;
+      state.trackStartTime = action.payload.trackStartTime;
+    },
+    
+    setRTMConnected: (state, action: PayloadAction<boolean>) => {
+      state.rtmConnected = action.payload;
+    },
   },
   extraReducers: (builder) => {
     // Fetch tracks
@@ -517,6 +542,9 @@ export const {
   setCreatingRoom,
   setJoiningRoom,
   setError,
+  updateParticipants,
+  updatePlaybackState,
+  setRTMConnected,
 } = jamSlice.actions;
 
 // Export reducer
