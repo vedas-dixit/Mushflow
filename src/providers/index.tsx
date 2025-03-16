@@ -4,7 +4,7 @@ import React, { ReactNode } from 'react';
 import ReduxProvider from "./ReduxProvider";
 import AuthSyncProvider from './AuthSyncProvider';
 import { RTMProvider } from './RTMProvider';
-import AgoraScriptLoader from '@/components/AgoraScriptLoader';
+
 import AuthProvider from './AuthProvider';
 
 interface ProvidersProps {
@@ -17,7 +17,7 @@ export function Providers({ children }: ProvidersProps) {
       <ReduxProvider>
         <AuthSyncProvider>
           <RTMProvider>
-            <AgoraScriptLoader />
+            
             {children}
           </RTMProvider>
         </AuthSyncProvider>
