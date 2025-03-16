@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, createContext, useContext, useRef } from 'react';
-import { Search, LayoutGrid, LogIn, LogOut, Music } from 'lucide-react';
+import { Search, LayoutGrid, LogIn, LogOut, Music, Pin } from 'lucide-react';
 import { LightbulbIcon, Bell, PencilLine, Archive, Trash } from 'lucide-react';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
@@ -10,6 +10,8 @@ import { JamState } from '@/redux/features/jamSlice';
 import { setCurrentView } from '@/redux/features/navigationSlice';
 import { showLogin } from '@/redux/features/authSlice';
 import { SettingsButton } from '@/components/Settings';
+import Image from 'next/image';
+import Link from 'next/link';
 
 type NavItem = {
     id: string;
@@ -45,7 +47,7 @@ export const HeaderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const [navItems, setNavItems] = useState<NavItem[]>([
         { id: 'notes', icon: <LightbulbIcon className="w-5 h-5 min-w-[20px]" />, label: 'Notes', isActive: true },
         { id: 'jam', icon: <Music className="w-5 h-5 min-w-[20px]" />, label: 'JAM Mode' },
-        { id: 'pinned', icon: <Bell className="w-5 h-5 min-w-[20px]" />, label: 'Pinned' },
+        { id: 'pinned', icon: <Pin className="w-5 h-5 min-w-[20px]" />, label: 'Pinned' },
     ]);
     const [activeNavId, setActiveNavId] = useState<string | null>('notes');
     const [searchQuery, setSearchQuery] = useState('');
@@ -137,7 +139,7 @@ const HeaderWithContext = () => {
                     <div className="flex items-center ml-2" ref={mushhovered}>
                         <img
                             src={mushsrc}
-                            alt="Keep Logo"
+                            alt="Mush Logo"
                             className="w-10 h-10"
                         />
                         <span className="ml-2 text-xl text-white">MushFlow</span>
@@ -158,17 +160,16 @@ const HeaderWithContext = () => {
                 </div>
 
                 <div className="flex items-center ">
-                    <SettingsButton />
-                    <button className="p-2 hover:bg-gray-100 rounded-full">
-                        <LayoutGrid className="w-6 h-6 text-gray-600" />
-                    </button>
+                    {/* Show settings button only on mobile */}
+                    <div className="md:hidden">
+                        <SettingsButton />
+                    </div>
                     
                     {isAuthenticated && (
                         <div className="flex items-center space-x-2">
                             {session?.user?.image ? (
                                 <button 
                                     className="ml-2 relative group"
-                                    onClick={() => signOut()}
                                >
                                     <img
                                         src={session.user.image}
@@ -194,7 +195,7 @@ const HeaderWithContext = () => {
             </div>
 
             {/* Desktop sidebar - hidden on mobile */}
-            <div className="fixed top-0 left-0 h-screen bg-[#202124] text-gray-300 pt-16 w-12 hover:w-64 transition-all duration-300 group z-10 hidden md:block">
+            <div className="fixed top-0 left-0 h-screen bg-[#202124] text-gray-300 pt-16 w-12 hover:w-64 transition-all duration-300 group z-10 hidden md:flex flex-col justify-between">
                 <nav>
                     <ul className="space-y-1">
                         {navItems.map((item) => (
@@ -216,6 +217,13 @@ const HeaderWithContext = () => {
                         ))}
                     </ul>
                 </nav>
+                
+                {/* Settings button at bottom of sidebar */}
+                <div className="mb-4">
+                    <div className="hidden md:block">
+                        <SettingsButton className="w-full flex items-center px-3 py-3 rounded-r-full hover:bg-gray-700 text-neutral-400 hover:text-white transition-colors group-hover:justify-start justify-center" />
+                    </div>
+                </div>
             </div>
 
             {/* Mobile bottom navigation - visible only on mobile */}
@@ -249,7 +257,7 @@ function HeaderComponent() {
     const [navItems, setNavItems] = useState<NavItem[]>([
         { id: 'notes', icon: <LightbulbIcon className="w-5 h-5 min-w-[20px]" />, label: 'Notes', isActive: true },
         { id: 'jam', icon: <Music className="w-5 h-5 min-w-[20px]" />, label: 'JAM Mode' },
-        { id: 'pinned', icon: <Bell className="w-5 h-5 min-w-[20px]" />, label: 'Pinned' },
+        { id: 'pinned', icon: <Pin className="w-5 h-5 min-w-[20px]" />, label: 'Pinned' },
     ]);
     const [searchQuery, setSearchQuery] = useState('');
     const dispatch = useAppDispatch();
@@ -304,7 +312,10 @@ function HeaderComponent() {
                 </div>
 
                 <div className="flex items-center space-x-2">
-                    <SettingsButton />
+                    {/* Show settings button only on mobile */}
+                    <div className="md:hidden">
+                        <SettingsButton />
+                    </div>
                     <button className="p-2 hover:bg-gray-100 rounded-full">
                         <LayoutGrid className="w-6 h-6 text-gray-600" />
                     </button>
@@ -355,7 +366,7 @@ function HeaderComponent() {
             </div>
 
             {/* Desktop sidebar - hidden on mobile */}
-            <div className="fixed top-0 left-0 h-screen bg-[#202124] text-gray-300 pt-16 w-12 hover:w-64 transition-all duration-300 group z-10 hidden md:block">
+            <div className="fixed top-0 left-0 h-screen bg-[#202124] text-gray-300 pt-16 w-12 hover:w-64 transition-all duration-300 group z-10 hidden md:flex flex-col justify-between">
                 <nav>
                     <ul className="space-y-1">
                         {navItems.map((item) => (
@@ -377,6 +388,13 @@ function HeaderComponent() {
                         ))}
                     </ul>
                 </nav>
+                
+                {/* Settings button at bottom of sidebar */}
+                <div className="mb-4 px-3">
+                    <div className="hidden md:block">
+                        <SettingsButton className="w-full flex items-center px-3 py-3 rounded-r-full hover:bg-gray-700 text-neutral-400 hover:text-white transition-colors group-hover:justify-start justify-center" />
+                    </div>
+                </div>
             </div>
 
             {/* Mobile bottom navigation - visible only on mobile */}
