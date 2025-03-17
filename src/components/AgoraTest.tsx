@@ -2,10 +2,13 @@
 
 import React, { useEffect, useState } from 'react';
 import AgoraRTM from 'agora-rtm-sdk';
+import { useAppDispatch } from '@/redux/hooks';
+import { setLoading } from '@/redux/features/loaderSlice';
 
 export default function AgoraTest() {
   const [logs, setLogs] = useState<string[]>([]);
   const [connected, setConnected] = useState(false);
+  const dispatch = useAppDispatch();
 
   const addLog = (message: string) => {
     console.log(message);
@@ -15,6 +18,8 @@ export default function AgoraTest() {
   useEffect(() => {
     const testAgoraRTM = async () => {
       try {
+        dispatch(setLoading(true));
+        
         // Log Agora RTM SDK information
         addLog(`Agora RTM SDK loaded: ${!!AgoraRTM}`);
         addLog(`Agora RTM SDK methods: ${Object.keys(AgoraRTM).join(', ')}`);
@@ -22,6 +27,7 @@ export default function AgoraTest() {
         // Check if RTM constructor exists
         if (!AgoraRTM.RTM) {
           addLog('ERROR: AgoraRTM.RTM constructor not found');
+          dispatch(setLoading(false));
           return;
         }
         
@@ -58,6 +64,7 @@ export default function AgoraTest() {
         
         if (!response.ok) {
           addLog(`ERROR: Failed to get token - ${data.error || 'Unknown error'}`);
+          dispatch(setLoading(false));
           return;
         }
         
@@ -98,24 +105,29 @@ export default function AgoraTest() {
               addLog('Logged out from RTM');
             } catch (error) {
               addLog(`Error during cleanup: ${error instanceof Error ? error.message : String(error)}`);
+            } finally {
+              dispatch(setLoading(false));
             }
           }, 10000);
           
-        } catch (loginError) {
-          addLog(`ERROR: Login failed - ${loginError instanceof Error ? loginError.message : String(loginError)}`);
+        } catch (error) {
+          addLog(`Error during RTM operations: ${error instanceof Error ? error.message : String(error)}`);
+          dispatch(setLoading(false));
         }
         
       } catch (error) {
-        addLog(`ERROR: ${error instanceof Error ? error.message : String(error)}`);
+        addLog(`Error: ${error instanceof Error ? error.message : String(error)}`);
+        dispatch(setLoading(false));
       }
     };
     
     testAgoraRTM();
     
     return () => {
-      // Cleanup will be handled by the setTimeout above
+      // Ensure loader is turned off when component unmounts
+      dispatch(setLoading(false));
     };
-  }, []);
+  }, [dispatch]);
   
   return (
     <div className="p-4 bg-neutral-900 text-white h-full overflow-auto">

@@ -2,12 +2,14 @@ import { configureStore } from "@reduxjs/toolkit";
 import authReducer from "./features/authSlice";
 import jamReducer from "./features/jamSlice";
 import navigationReducer from "./features/navigationSlice";
+import loaderReducer from "./features/loaderSlice";
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
     jam: jamReducer,
     navigation: navigationReducer,
+    loader: loaderReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

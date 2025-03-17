@@ -7,6 +7,7 @@ import { PredefinedLabels } from "@/utils/predefinedLabels";
 import { updateTask, deleteTask } from "@/utils/taskService";
 import { useSession } from "next-auth/react";
 import ModernDatePicker from "../datepickercomponent/DatePickerComponent";
+import { uploadAttachments, deleteAttachment, formatFileSize, getFileIcon } from "@/utils/attachmentService";
 
 // Define a simple Attachment type
 interface Attachment {
@@ -308,28 +309,13 @@ function Card({
     setIsUploading(true);
     
     try {
-      const formData = new FormData();
-      formData.append('taskId', id);
-      
-      files.forEach(file => {
-        formData.append('files', file);
-      });
-      
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to upload files');
-      }
-      
-      const data = await response.json();
-      const newAttachments = [...taskAttachments, ...data.attachments];
-      setTaskAttachments(newAttachments);
+      // Use the attachmentService instead of direct API call
+      const newAttachments = await uploadAttachments(id, files);
+      const updatedAttachments = [...taskAttachments, ...newAttachments];
+      setTaskAttachments(updatedAttachments);
       
       // Update the task with new attachments
-      updateTaskField('attachments', newAttachments);
+      updateTaskField('attachments', updatedAttachments);
       
     } catch (error) {
       console.error('Error uploading files:', error);
@@ -346,17 +332,8 @@ function Card({
   // Handle file deletion
   const handleDeleteAttachment = async (attachment: Attachment) => {
     try {
-      const response = await fetch(`/api/upload/${attachment.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ key: attachment.key }),
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to delete file');
-      }
+      // Use the attachmentService instead of direct API call
+      await deleteAttachment(attachment.id, attachment.key);
       
       const updatedAttachments = taskAttachments.filter(att => att.id !== attachment.id);
       setTaskAttachments(updatedAttachments);
@@ -368,25 +345,6 @@ function Card({
       console.error('Error deleting file:', error);
       alert('Failed to delete file. Please try again.');
     }
-  };
-  
-  // Format file size
-  const formatFileSize = (bytes: number) => {
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-  };
-  
-  // Get file icon based on content type
-  const getFileIcon = (contentType: string) => {
-    if (contentType.startsWith('image/')) return '🖼️';
-    if (contentType.startsWith('video/')) return '🎬';
-    if (contentType.startsWith('audio/')) return '🎵';
-    if (contentType.includes('pdf')) return '📄';
-    if (contentType.includes('word') || contentType.includes('document')) return '📝';
-    if (contentType.includes('excel') || contentType.includes('spreadsheet')) return '📊';
-    if (contentType.includes('presentation') || contentType.includes('powerpoint')) return '📽️';
-    return '📎';
   };
   
   // Preview file

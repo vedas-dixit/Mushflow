@@ -7,7 +7,7 @@ import MusicVisualization from './MusicVisualization';
 import ParticipantsList from './ParticipantsList';
 import ChatArea from './ChatArea';
 import { useAppSelector, useAppDispatch } from '@/redux/hooks';
-import { 
+import {  
   JamState, 
   sendMessage, 
   setVolume, 

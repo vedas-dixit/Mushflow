@@ -1,4 +1,7 @@
 // Define the Attachment interface
+import { store } from '@/redux/store';
+import { setLoading } from '@/redux/features/loaderSlice';
+
 export interface Attachment {
   id: string;
   taskId: string;
@@ -57,37 +60,59 @@ export const uploadAttachments = async (taskId: string, files: File[]): Promise<
     throw new Error('Task ID and files are required');
   }
   
-  const formData = new FormData();
-  formData.append('taskId', taskId);
+  // Show loader
+  store.dispatch(setLoading(true));
   
-  files.forEach(file => {
-    formData.append('files', file);
-  });
-  
-  const response = await fetch('/api/upload', {
-    method: 'POST',
-    body: formData,
-  });
-  
-  if (!response.ok) {
-    throw new Error('Failed to upload files');
+  try {
+    const formData = new FormData();
+    formData.append('taskId', taskId);
+    
+    files.forEach(file => {
+      formData.append('files', file);
+    });
+    
+    const response = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData,
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to upload files');
+    }
+    
+    const data = await response.json();
+    return data.attachments;
+  } catch (error) {
+    console.error('Error uploading attachments:', error);
+    throw error;
+  } finally {
+    // Hide loader
+    store.dispatch(setLoading(false));
   }
-  
-  const data = await response.json();
-  return data.attachments;
 };
 
 // Delete attachment
 export const deleteAttachment = async (attachmentId: string, key: string): Promise<void> => {
-  const response = await fetch(`/api/upload/${attachmentId}`, {
-    method: 'DELETE',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ key }),
-  });
+  // Show loader
+  store.dispatch(setLoading(true));
   
-  if (!response.ok) {
-    throw new Error('Failed to delete file');
+  try {
+    const response = await fetch(`/api/upload/${attachmentId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ key }),
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to delete file');
+    }
+  } catch (error) {
+    console.error('Error deleting attachment:', error);
+    throw error;
+  } finally {
+    // Hide loader
+    store.dispatch(setLoading(false));
   }
 }; 
