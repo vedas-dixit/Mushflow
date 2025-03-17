@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useRef, useEffect, useState } from 'react';
-import { Play, Pause, Volume2, X, Maximize2 } from 'lucide-react';
+import { Play, Pause, Volume2, Volume1, VolumeX, X, Maximize2, Music } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAppSelector, useAppDispatch } from '@/redux/hooks';
 import { JamState, setPlaybackState, setVolume, leaveRoom } from '@/redux/features/jamSlice';
@@ -16,6 +16,7 @@ export default function MiniPlayer() {
   const jamState = useAppSelector(state => state.jam) as JamState;
   const { currentView } = useAppSelector(state => state.navigation) as NavigationState;
   const audioRef = useRef<HTMLAudioElement>(null);
+  const [showVolumeControl, setShowVolumeControl] = useState(false);
   
   // Extract values from jamState safely
   const inRoom = jamState?.inRoom || false;
@@ -125,19 +126,31 @@ export default function MiniPlayer() {
     dispatch(leaveRoom());
   };
   
+  // Get volume icon based on level
+  const getVolumeIcon = () => {
+    if (volume === 0) return <VolumeX size={16} />;
+    if (volume < 50) return <Volume1 size={16} />;
+    return <Volume2 size={16} />;
+  };
+  
   // If not in a room, no track, or already on the JAM page, don't render anything
   if (!inRoom || !currentTrack || currentView === 'jam') {
     return null;
   }
   
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-neutral-800 border-t border-neutral-700 p-3 flex items-center z-50">
+    <div className="fixed bottom-0 left-0 right-0 bg-black/70 backdrop-blur-md border-t border-white/10 p-3 flex items-center z-40">
       <audio ref={audioRef} src={currentTrack.url} />
+      
+      {/* Album Art Placeholder */}
+      <div className="w-10 h-10 rounded bg-gradient-to-br from-amber-500/20 to-amber-700/20 flex items-center justify-center mr-3 overflow-hidden">
+        <Music size={16} className="text-amber-500/70" />
+      </div>
       
       {/* Track Info */}
       <div className="flex-1 min-w-0 mr-4">
-        <div className="truncate font-medium text-sm">{currentTrack.title}</div>
-        <div className="truncate text-neutral-400 text-xs">
+        <div className="truncate font-medium text-sm text-white">{currentTrack.title}</div>
+        <div className="truncate text-white/60 text-xs">
           {roomName} • {currentTrack.artist}
         </div>
       </div>
@@ -150,39 +163,49 @@ export default function MiniPlayer() {
           className="w-8 h-8 flex items-center justify-center rounded-full bg-amber-500 hover:bg-amber-600 transition-colors"
         >
           {isPlaying ? (
-            <Pause size={16} className="text-white" />
+            <Pause size={14} className="text-white" />
           ) : (
-            <Play size={16} className="text-white" />
+            <Play size={14} className="text-white ml-0.5" />
           )}
         </button>
         
         {/* Volume Control */}
-        <div className="hidden sm:flex items-center gap-2">
-          <Volume2 size={16} className="text-neutral-400" />
-          <input
-            type="range"
-            min="0"
-            max="100"
-            value={volume}
-            onChange={handleVolumeChange}
-            className="w-20 accent-amber-500"
-          />
+        <div className="relative">
+          <button 
+            onClick={() => setShowVolumeControl(!showVolumeControl)}
+            className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white"
+          >
+            {getVolumeIcon()}
+          </button>
+          
+          {showVolumeControl && (
+            <div className="absolute bottom-full right-0 mb-2 p-2 bg-black/80 backdrop-blur-md border border-white/10 rounded-lg shadow-lg">
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={volume}
+                onChange={handleVolumeChange}
+                className="w-24 accent-amber-500"
+              />
+            </div>
+          )}
         </div>
         
         {/* Maximize Button */}
         <button 
           onClick={handleMaximize}
-          className="w-8 h-8 flex items-center justify-center rounded-full bg-neutral-700 hover:bg-neutral-600 transition-colors"
+          className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white"
         >
-          <Maximize2 size={14} className="text-white" />
+          <Maximize2 size={14} />
         </button>
         
         {/* Close Button */}
         <button 
           onClick={handleClose}
-          className="w-8 h-8 flex items-center justify-center rounded-full bg-neutral-700 hover:bg-neutral-600 transition-colors"
+          className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white"
         >
-          <X size={14} className="text-white" />
+          <X size={14} />
         </button>
       </div>
     </div>

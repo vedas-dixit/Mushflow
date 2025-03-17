@@ -195,7 +195,7 @@ const HeaderWithContext = () => {
             </div>
 
             {/* Desktop sidebar - hidden on mobile */}
-            <div className="fixed top-0 left-0 h-screen bg-[#202124] text-gray-300 pt-16 w-12 hover:w-64 transition-all duration-300 group z-10 hidden md:flex flex-col justify-between">
+            <div className="fixed top-0 left-0 h-screen bg-[#202124] text-gray-300 pt-16 w-12 hover:w-64 transition-all duration-300 group z-20 hidden md:flex flex-col justify-between">
                 <nav>
                     <ul className="space-y-1">
                         {navItems.map((item) => (
@@ -366,7 +366,7 @@ function HeaderComponent() {
             </div>
 
             {/* Desktop sidebar - hidden on mobile */}
-            <div className="fixed top-0 left-0 h-screen bg-[#202124] text-gray-300 pt-16 w-12 hover:w-64 transition-all duration-300 group z-10 hidden md:flex flex-col justify-between">
+            <div className="fixed top-0 left-0 h-screen bg-[#202124] text-gray-300 pt-16 w-12 hover:w-64 transition-all duration-300 group z-20 hidden md:flex flex-col justify-between">
                 <nav>
                     <ul className="space-y-1">
                         {navItems.map((item) => (

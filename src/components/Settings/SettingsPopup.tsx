@@ -45,7 +45,7 @@ const SettingsPopup: React.FC<SettingsPopupProps> = ({ isOpen, onClose }) => {
   
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/50">
         <div className="relative w-full max-w-md bg-neutral-900 rounded-lg shadow-lg overflow-hidden mt-10">
           {/* Header */}
           <div className="flex justify-between items-center p-4 border-b border-neutral-800">

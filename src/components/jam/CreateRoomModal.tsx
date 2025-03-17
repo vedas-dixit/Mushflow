@@ -72,13 +72,13 @@ export default function CreateRoomModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-      <div className="bg-neutral-800 rounded-xl shadow-xl w-full max-w-lg overflow-hidden">
-        <div className="flex justify-between items-center p-6 border-b border-neutral-700">
-          <h2 className="text-xl font-bold">Create a New JAM Room</h2>
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-black/70 backdrop-blur-md rounded-xl shadow-xl border border-white/10 w-full max-w-lg overflow-hidden">
+        <div className="flex justify-between items-center p-6 border-b border-white/10">
+          <h2 className="text-xl font-bold text-white">Create a New JAM Room</h2>
           <button 
             onClick={onClose}
-            className="text-neutral-400 hover:text-white transition-colors"
+            className="text-white/70 hover:text-white transition-colors"
           >
             <X size={24} />
           </button>
@@ -86,7 +86,7 @@ export default function CreateRoomModal({
         
         <div className="p-6 space-y-6">
           <div>
-            <label htmlFor="roomName" className="block text-sm font-medium text-neutral-300 mb-2">
+            <label htmlFor="roomName" className="block text-sm font-medium text-white/80 mb-2">
               Room Name (optional)
             </label>
             <input
@@ -95,12 +95,12 @@ export default function CreateRoomModal({
               value={roomName}
               onChange={(e) => setRoomName(e.target.value)}
               placeholder="Enter room name or leave blank for random name"
-              className="w-full bg-neutral-700 border border-neutral-600 rounded-lg py-3 px-4 text-white placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+              className="w-full bg-white/5 border border-white/10 rounded-lg py-3 px-4 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
             />
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-neutral-300 mb-2">
+            <label className="block text-sm font-medium text-white/80 mb-2">
               Select a Banner
             </label>
             <div className="grid grid-cols-4 gap-3">
@@ -109,24 +109,26 @@ export default function CreateRoomModal({
                   key={banner.id}
                   onClick={() => setSelectedBanner(banner.id)}
                   className={`
-                    aspect-video bg-neutral-700 rounded-lg overflow-hidden cursor-pointer
-                    ${selectedBanner === banner.id ? 'ring-2 ring-amber-500' : 'hover:opacity-80'}
+                    aspect-video rounded-lg overflow-hidden cursor-pointer
+                    ${selectedBanner === banner.id ? 'ring-2 ring-amber-500 scale-105' : 'hover:bg-white/10'}
                     transition-all duration-200
                   `}
                 >
-                  <div className="h-full flex items-center justify-center text-2xl">
-                    {getBannerEmoji(banner.id)}
-                  </div>
+                  <img 
+                    src={`/banners/${banner.id}.jpg`} 
+                    alt={banner.name}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
               ))}
             </div>
           </div>
         </div>
         
-        <div className="flex justify-end gap-3 p-6 border-t border-neutral-700">
+        <div className="flex justify-end gap-3 p-6 border-t border-white/10">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-lg bg-neutral-700 hover:bg-neutral-600 text-white transition-colors"
+            className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
           >
             Cancel
           </button>
