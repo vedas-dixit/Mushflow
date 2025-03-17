@@ -10,7 +10,7 @@ import {
   fetchRoomDetails 
 } from '@/redux/features/jamSlice';
 import { useRTM } from '@/providers/RTMProvider';
-import { ArrowLeft, Share2, Users, ChevronRight, ChevronLeft, X, Volume2, Volume1, VolumeX, Music, ChevronDown, ChevronUp, Play, Pause, SkipForward, Send, Clock } from 'lucide-react';
+import { ArrowLeft, Share2, Users, ChevronRight, ChevronLeft, X, Volume2, Volume1, VolumeX, Music, ChevronDown, ChevronUp, Play, Pause, SkipForward, Send, Clock, MessageSquare } from 'lucide-react';
 
 interface JamRoomProps {
   roomId: string;
@@ -236,8 +236,8 @@ export default function JamRoom({
       {/* Overlay Gradient */}
       <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-black/40" />
       
-      {/* Main Content */}
-      <div className="relative z-10 h-full flex flex-col">
+      {/* Main Content - Add left margin for sidebar and lower z-index */}
+      <div className="relative z-5 h-full flex flex-col ml-16">
         {/* Header */}
         <div className="px-6 py-4 flex justify-between items-center">
           <button 
@@ -382,18 +382,78 @@ export default function JamRoom({
             )}
           </div>
           
+          {/* Participants Panel - Fixed to left side next to sidebar with lower z-index */}
+          <div className={`fixed top-20 left-16 h-1/2 transition-all duration-300 ease-in-out z-5 ${showParticipants ? 'w-48' : 'w-0'}`}>
+            {showParticipants && (
+              <div className="h-full flex flex-col bg-black/50 backdrop-blur-md rounded-r-lg border border-white/10">
+                <div className="flex justify-between items-center p-2 border-b border-white/10">
+                  <h2 className="text-xs font-medium text-white">Participants ({jamState.participants.length})</h2>
+                  <button 
+                    onClick={() => setShowParticipants(false)}
+                    className="text-white/70 hover:text-white"
+                  >
+                    <ChevronLeft size={14} />
+                  </button>
+                </div>
+                
+                <div className="flex-1 p-1 overflow-y-auto">
+                  <div className="space-y-1">
+                    {jamState.participants.length === 0 ? (
+                      <div className="text-white/50 text-center py-2 text-xs">
+                        No participants yet
+                      </div>
+                    ) : (
+                      jamState.participants.map(participant => (
+                        <div 
+                          key={participant.id}
+                          className="flex items-center p-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                        >
+                          <div className={`w-1.5 h-1.5 rounded-full mr-1.5 ${participant.isActive ? 'bg-green-500' : 'bg-neutral-500'}`} />
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-white text-xs truncate">
+                              {participant.name}
+                              {participant.id === userId && ' (You)'}
+                            </div>
+                            <div className="text-[10px] text-white/50 flex items-center">
+                              <Clock size={8} className="mr-1" />
+                              <span className="truncate">Joined {formatTime(participant.joinedAt)}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          {/* Collapsed Participants Toggle */}
+          {!showParticipants && (
+            <button 
+              onClick={() => setShowParticipants(true)}
+              className="fixed left-16 top-20 bg-amber-500/80 hover:bg-amber-600 text-white p-2 rounded-r-lg z-10 shadow-lg"
+            >
+              <div className="flex items-center">
+                <Users size={16} className="mr-1" />
+                <span className="text-xs">{jamState.participants.length}</span>
+              </div>
+            </button>
+          )}
+
           {/* Chat Panel - Fixed to right side */}
-          <div className={`fixed top-0 right-0 h-full transition-all duration-300 ease-in-out z-20 ${showChat ? 'w-80' : 'w-0'}`}>
+          <div className={`fixed top-0 right-0 h-full transition-all duration-300 ease-in-out z-5 ${showChat ? 'w-80' : 'w-0'}`}>
             {showChat && (
-              <div className="h-full flex flex-col bg-black/50 backdrop-blur-md">
+              <div className="h-full flex flex-col bg-black/50 backdrop-blur-md border-l border-white/10 rounded-l-lg">
                 <div className="flex justify-between items-center p-4 border-b border-white/10">
-                  <h2 className="text-lg font-medium text-white">Chat</h2>
                   <button 
                     onClick={() => setShowChat(false)}
                     className="text-white/70 hover:text-white"
                   >
                     <ChevronRight size={20} />
                   </button>
+                  <h2 className="text-lg font-medium text-white">Chat</h2>
+                  <div className="w-5"></div> {/* Spacer for alignment */}
                 </div>
                 
                 {/* Messages - Fixed height to ensure message input is visible */}
@@ -472,75 +532,13 @@ export default function JamRoom({
             )}
           </div>
           
-          {/* Collapsed Chat Toggle */}
-          {!showChat && (
-            <button 
-              onClick={() => setShowChat(true)}
-              className="fixed right-0 top-1/2 transform -translate-y-1/2 bg-black/50 text-white/70 hover:text-white p-2 rounded-l-lg z-20"
-            >
-              <ChevronLeft size={20} />
-            </button>
-          )}
-          
-          {/* Participants Panel - Fixed to bottom */}
-          <div className={`fixed bottom-0 left-0 right-0 transition-all duration-300 ease-in-out z-20 ${showParticipants ? 'h-64' : 'h-0'}`}>
-            {showParticipants && (
-              <div className="h-full flex flex-col bg-black/50 backdrop-blur-md">
-                <div className="flex justify-between items-center p-4 border-b border-white/10">
-                  <h2 className="text-lg font-medium text-white">Participants ({jamState.participants.length})</h2>
-                  <button 
-                    onClick={() => setShowParticipants(false)}
-                    className="text-white/70 hover:text-white"
-                  >
-                    <ChevronDown size={20} />
-                  </button>
-                </div>
-                
-                <div className="flex-1 p-4 overflow-y-auto">
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                    {jamState.participants.length === 0 ? (
-                      <div className="text-white/50 text-center py-4 col-span-full">
-                        No participants yet
-                      </div>
-                    ) : (
-                      jamState.participants.map(participant => (
-                        <div 
-                          key={participant.id}
-                          className="flex items-center p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-                        >
-                          <div className={`w-2 h-2 rounded-full mr-3 ${participant.isActive ? 'bg-green-500' : 'bg-neutral-500'}`} />
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium text-white truncate">
-                              {participant.name}
-                              {participant.id === userId && ' (You)'}
-                            </div>
-                            <div className="text-xs text-white/50 flex items-center mt-1">
-                              <Clock size={12} className="mr-1" />
-                              Joined {formatTime(participant.joinedAt)}
-                            </div>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-          
-          {/* Collapsed Participants Toggle */}
-          {!showParticipants && (
-            <button 
-              onClick={() => setShowParticipants(true)}
-              className="fixed bottom-0 left-1/2 transform -translate-x-1/2 bg-black/50 text-white/70 hover:text-white p-2 px-4 rounded-t-lg z-20"
-            >
-              <div className="flex items-center">
-                <Users size={16} className="mr-2" />
-                <span>Show Participants ({jamState.participants.length})</span>
-                <ChevronUp size={16} className="ml-2" />
-              </div>
-            </button>
-          )}
+          {/* Slide Left/Right Chat Button */}
+          <button 
+            onClick={() => setShowChat(!showChat)}
+            className={`fixed top-1/2 transform -translate-y-1/2 bg-amber-500/80 hover:bg-amber-600 text-white p-2 rounded-l-lg z-10 shadow-lg transition-all duration-300 ${showChat ? 'right-80' : 'right-0'}`}
+          >
+            {showChat ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+          </button>
         </div>
       </div>
     </div>
