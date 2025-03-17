@@ -382,10 +382,10 @@ export default function JamRoom({
             )}
           </div>
           
-          {/* Participants Panel - Fixed to left side next to sidebar with lower z-index */}
-          <div className={`fixed top-20 left-16 h-1/2 transition-all duration-300 ease-in-out z-5 ${showParticipants ? 'w-48' : 'w-0'}`}>
+          {/* Participants Panel - Fixed to bottom left next to sidebar with lower z-index */}
+          <div className={`fixed bottom-0 left-16 h-1/2 transition-all duration-300 ease-in-out z-5 ${showParticipants ? 'w-48' : 'w-0'}`}>
             {showParticipants && (
-              <div className="h-full flex flex-col bg-black/50 backdrop-blur-md rounded-r-lg border border-white/10">
+              <div className="h-full flex flex-col bg-black/50 backdrop-blur-md rounded-tr-lg border border-white/10">
                 <div className="flex justify-between items-center p-2 border-b border-white/10">
                   <h2 className="text-xs font-medium text-white">Participants ({jamState.participants.length})</h2>
                   <button 
@@ -432,7 +432,7 @@ export default function JamRoom({
           {!showParticipants && (
             <button 
               onClick={() => setShowParticipants(true)}
-              className="fixed left-16 top-20 bg-amber-500/80 hover:bg-amber-600 text-white p-2 rounded-r-lg z-10 shadow-lg"
+              className="fixed left-16 bottom-0 bg-amber-500/80 hover:bg-amber-600 text-white p-2 rounded-tr-lg z-10 shadow-lg"
             >
               <div className="flex items-center">
                 <Users size={16} className="mr-1" />
