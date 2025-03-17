@@ -1,15 +1,22 @@
 .loaderContainer {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 9999;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.loaderImage {
-  width: 60px;
-  height: 60px;
-  object-fit: contain;
-} 
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: fadeInOut 2s ease-in-out infinite;
+  }
+  
+  @keyframes fadeInOut {
+    0% { opacity: 0.4; }   /* Start fully invisible */
+    50% { opacity: 1; }  /* Fully visible at midpoint */
+    100% { opacity: 0.4; } /* Fade out completely */
+  }
+  
+  .loaderImage {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+  }
