@@ -5,6 +5,7 @@ import { useSession, signIn } from 'next-auth/react';
 import { Music, LogIn, X } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '@/redux/hooks';
 import { hideLogin } from '@/redux/features/authSlice';
+import AnimatedMushIcon from '../animIcon/AnimMushIcon';
 
 export default function LoginModal() {
   const { data: session, status } = useSession();
@@ -29,8 +30,8 @@ export default function LoginModal() {
         <div className="flex justify-between items-center mb-4">
           <div className="flex-1"></div>
           <div className="flex justify-center flex-1">
-            <div className="bg-amber-500/20 p-4 rounded-full">
-              <Music size={32} className="text-amber-500" />
+            <div className="bg-[#292524] scale-[1.8]  flex items-center justify-center p-2 rounded-full">
+              <AnimatedMushIcon />
             </div>
           </div>
           <div className="flex-1 flex justify-end">

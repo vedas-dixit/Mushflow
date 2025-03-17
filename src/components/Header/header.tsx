@@ -12,6 +12,7 @@ import { showLogin } from '@/redux/features/authSlice';
 import { SettingsButton } from '@/components/Settings';
 import Image from 'next/image';
 import Link from 'next/link';
+import AnimatedMushIcon from '../animIcon/AnimMushIcon';
 
 type NavItem = {
     id: string;
@@ -136,14 +137,8 @@ const HeaderWithContext = () => {
         <>
             <div className="sticky top-0 left-0 right-0 flex items-center w-full px-4 py-2 bg-stone-800 shadow-sm z-30">
                 <div className="flex items-center">
-                    <div className="flex items-center ml-2" ref={mushhovered}>
-                        <img
-                            src={mushsrc}
-                            alt="Mush Logo"
-                            className="w-10 h-10"
-                        />
-                        <span className="ml-2 text-xl text-white">MushFlow</span>
-                    </div>
+                    <AnimatedMushIcon />
+                    <span className="ml-2 text-xl text-white">MushFlow</span>
                 </div>
 
                 <div className="flex flex-1 mx-8">
