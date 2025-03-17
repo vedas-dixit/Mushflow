@@ -221,7 +221,7 @@ const HeaderWithContext = () => {
                 {/* Settings button at bottom of sidebar */}
                 <div className="mb-4">
                     <div className="hidden md:block">
-                        <SettingsButton className="w-full flex items-center px-3 py-3 rounded-r-full hover:bg-gray-700 text-neutral-400 hover:text-white transition-colors group-hover:justify-start justify-center" />
+                        <SettingsButton className="w-full flex items-center px-3 py-3 rounded-r-full hover:bg-gray-700 text-neutral-400 hover:text-white transition-colors" />
                     </div>
                 </div>
             </div>
@@ -392,7 +392,7 @@ function HeaderComponent() {
                 {/* Settings button at bottom of sidebar */}
                 <div className="mb-4 px-3">
                     <div className="hidden md:block">
-                        <SettingsButton className="w-full flex items-center px-3 py-3 rounded-r-full hover:bg-gray-700 text-neutral-400 hover:text-white transition-colors group-hover:justify-start justify-center" />
+                        <SettingsButton className="w-full flex items-center px-3 py-3 rounded-r-full hover:bg-gray-700 text-neutral-400 hover:text-white transition-colors" />
                     </div>
                 </div>
             </div>

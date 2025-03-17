@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
+import { setLoading } from './loaderSlice';
 
 // Define types for our state
 export interface Participant {
@@ -196,8 +197,9 @@ export const joinRoom = createAsyncThunk(
 
 export const fetchRoomDetails = createAsyncThunk(
   'jam/fetchRoomDetails',
-  async (roomId: string, { rejectWithValue }) => {
+  async (roomId: string, { rejectWithValue, dispatch }) => {
     try {
+      dispatch(setLoading(true));
       const response = await axios.get(`/api/jam/rooms/${roomId}`);
       return response.data.room;
     } catch (error) {
@@ -205,14 +207,17 @@ export const fetchRoomDetails = createAsyncThunk(
         return rejectWithValue(error.response.data.error || 'Failed to fetch room details');
       }
       return rejectWithValue('Failed to fetch room details');
+    } finally {
+      dispatch(setLoading(false));
     }
   }
 );
 
 export const leaveCurrentRoom = createAsyncThunk(
   'jam/leaveCurrentRoom',
-  async (roomId: string, { rejectWithValue }) => {
+  async (roomId: string, { rejectWithValue, dispatch }) => {
     try {
+      dispatch(setLoading(true));
       const response = await axios.post(`/api/jam/rooms/${roomId}/leave`);
       return response.data;
     } catch (error) {
@@ -220,14 +225,17 @@ export const leaveCurrentRoom = createAsyncThunk(
         return rejectWithValue(error.response.data.error || 'Failed to leave room');
       }
       return rejectWithValue('Failed to leave room');
+    } finally {
+      dispatch(setLoading(false));
     }
   }
 );
 
 export const sendMessage = createAsyncThunk(
   'jam/sendMessage',
-  async ({ roomId, content }: { roomId: string; content: string }, { rejectWithValue }) => {
+  async ({ roomId, content }: { roomId: string; content: string }, { rejectWithValue, dispatch }) => {
     try {
+      dispatch(setLoading(true));
       const response = await axios.post(`/api/jam/rooms/${roomId}/messages`, { content });
       return response.data.message;
     } catch (error) {
@@ -235,6 +243,8 @@ export const sendMessage = createAsyncThunk(
         return rejectWithValue(error.response.data.error || 'Failed to send message');
       }
       return rejectWithValue('Failed to send message');
+    } finally {
+      dispatch(setLoading(false));
     }
   }
 );

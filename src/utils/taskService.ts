@@ -1,10 +1,15 @@
 import { CreateTaskInput, Task } from '@/types/Task';
+import { store } from '@/redux/store';
+import { setLoading } from '@/redux/features/loaderSlice';
 
 /**
  * Save a task to the database
  */
 export async function saveTask(taskData: CreateTaskInput): Promise<Task> {
   console.log('Saving task:', taskData);
+  
+  // Show loader
+  store.dispatch(setLoading(true));
   
   try {
     const response = await fetch('/api/addTask', {
@@ -31,6 +36,9 @@ export async function saveTask(taskData: CreateTaskInput): Promise<Task> {
       console.log('Creating mock task response for development');
     }
     throw error;
+  } finally {
+    // Hide loader
+    store.dispatch(setLoading(false));
   }
 }
 
@@ -39,6 +47,9 @@ export async function saveTask(taskData: CreateTaskInput): Promise<Task> {
  */
 export async function getTasks(userId: string): Promise<Task[]> {
   console.log('Fetching tasks for user:', userId);
+  
+  // Show loader
+  store.dispatch(setLoading(true));
   
   try {
     const response = await fetch(`/api/getTask?userId=${encodeURIComponent(userId)}`, {
@@ -60,6 +71,9 @@ export async function getTasks(userId: string): Promise<Task[]> {
   } catch (error) {
     console.error('Error fetching tasks:', error);
     return [];
+  } finally {
+    // Hide loader
+    store.dispatch(setLoading(false));
   }
 } 
 
@@ -118,8 +132,13 @@ const throttle = <T extends (...args: any[]) => any>(
 export const updateTask = throttle(async (taskData: Partial<Task> & { id: string; userId: string }): Promise<Task> => {
   console.log('Updating task:', taskData);
   
+  // Show loader
+  store.dispatch(setLoading(true));
+  
   if (!taskData.id || !taskData.userId) {
     console.error('Missing required parameters for updateTask:', { id: taskData.id, userId: taskData.userId });
+    // Hide loader
+    store.dispatch(setLoading(false));
     throw new Error('Missing required parameters: id and userId are required');
   }
 
@@ -155,6 +174,9 @@ export const updateTask = throttle(async (taskData: Partial<Task> & { id: string
       return mockTask;
     }
     throw error;
+  } finally {
+    // Hide loader
+    store.dispatch(setLoading(false));
   }
 }, 800); // 800ms throttle delay, similar to Google Keep
 
@@ -162,8 +184,13 @@ export const updateTask = throttle(async (taskData: Partial<Task> & { id: string
  * Delete a task from the database
  */
 export async function deleteTask(taskId: string, userId: string): Promise<boolean> {
+  // Show loader
+  store.dispatch(setLoading(true));
+  
   if (!taskId || !userId) {
     console.error('Missing required parameters for deleteTask:', { taskId, userId });
+    // Hide loader
+    store.dispatch(setLoading(false));
     throw new Error('Missing required parameters: taskId and userId are required');
   }
 
@@ -194,6 +221,9 @@ export async function deleteTask(taskId: string, userId: string): Promise<boolea
       return true;
     }
     throw error;
+  } finally {
+    // Hide loader
+    store.dispatch(setLoading(false));
   }
 }
 

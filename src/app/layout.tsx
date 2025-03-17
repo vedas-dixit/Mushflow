@@ -7,6 +7,8 @@ import LoginModal from "@/components/auth/LoginModal";
 import AppViewManager from "@/components/AppViewManager";
 import Script from "next/script";
 import { Providers } from "@/providers";
+import Loader from "@/components/loader/Loader";
+
 
 // Add type declaration for the global AgoraRTM object
 declare global {
@@ -54,6 +56,7 @@ export default function RootLayout({
             </AppViewManager>
             <MiniPlayer />
             <LoginModal />
+            <Loader />
           </HeaderProvider>
         </Providers>
       </body>

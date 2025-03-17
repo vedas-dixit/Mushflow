@@ -45,8 +45,8 @@ const SettingsPopup: React.FC<SettingsPopupProps> = ({ isOpen, onClose }) => {
   
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 m-0">
-        <div className="relative w-full max-w-md bg-neutral-900 rounded-lg shadow-lg overflow-hidden">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div className="relative w-full max-w-md bg-neutral-900 rounded-lg shadow-lg overflow-hidden mt-10">
           {/* Header */}
           <div className="flex justify-between items-center p-4 border-b border-neutral-800">
             <div></div>
@@ -63,13 +63,7 @@ const SettingsPopup: React.FC<SettingsPopupProps> = ({ isOpen, onClose }) => {
             {/* User Profile */}
             <UserProfile onUpdate={handleProfileUpdate} />
             
-            {/* Logout Option */}
-            <div className="bg-neutral-800 rounded-lg p-3 flex justify-between items-center cursor-pointer hover:bg-neutral-700 transition-colors" onClick={handleLogout}>
-              <div className="flex items-center space-x-2">
-                <LogOut size={16} className="text-red-500" />
-                <span className="text-white">Logout</span>
-              </div>
-            </div>
+            
             
             {/* Version Info */}
             <VersionInfo 
@@ -92,6 +86,13 @@ const SettingsPopup: React.FC<SettingsPopupProps> = ({ isOpen, onClose }) => {
             
             {/* About Section */}
             <AboutSection />
+          </div>
+          {/* Logout Option */}
+          <div className="mx-4 mb-2 bg-neutral-800 rounded-lg p-3 flex justify-between items-center cursor-pointer hover:bg-neutral-700 transition-colors" onClick={handleLogout}>
+              <div className="flex items-center space-x-2">
+                <LogOut size={16} className="text-red-500" />
+                <span className="text-white">Logout</span>
+              </div>
           </div>
           
           {/* Footer */}
