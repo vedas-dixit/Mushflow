@@ -116,10 +116,6 @@ export default function MiniPlayer() {
     dispatch(setVolume(parseInt(e.target.value)));
   };
   
-  // Handle maximize (go to JAM page)
-  const handleMaximize = () => {
-    router.push('/jam');
-  };
   
   // Handle close (leave room)
   const handleClose = () => {
@@ -191,14 +187,7 @@ export default function MiniPlayer() {
             </div>
           )}
         </div>
-        
-        {/* Maximize Button */}
-        <button 
-          onClick={handleMaximize}
-          className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white"
-        >
-          <Maximize2 size={14} />
-        </button>
+
         
         {/* Close Button */}
         <button 
