@@ -55,17 +55,19 @@ function CardBox({ tasks: initialTasks, onTaskUpdate, onTaskDelete }: CardBoxPro
   const getEmptyStateMessage = () => {
     if (activeNavId === 'pinned') {
       return "No pinned tasks yet";
+    } else if (tasks.length === 0 && initialTasks.length > 0) {
+      return "No tasks match your filters";
     }
     return "Add your first task";
   };
   
   return (
     !tasks.length ? 
-    <div className="w-full h-full flex justify-center items-center text-gray-400 mt-28">
+    <div className="w-full h-full flex justify-center items-center text-gray-400 mt-8">
       {getEmptyStateMessage()}
     </div> 
     : 
-    <div className="w-full h-full px-4 md:pl-16 mt-28 flex justify-center">
+    <div className="w-full h-full px-4 md:pl-16 flex justify-center">
       <div className="w-full columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
         {tasks.map((task) => {
           // Ensure task has an ID and userId
