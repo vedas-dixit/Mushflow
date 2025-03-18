@@ -2,13 +2,26 @@
 
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
 export default function SignIn() {
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/";
-  const error = searchParams.get("error");
-
+  const [isMounted, setIsMounted] = useState(false);
+  
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+  
+  // Safe way to access searchParams after mounting
+  const callbackUrl = searchParams?.get("callbackUrl") || "/";
+  const error = searchParams?.get("error");
+  
+  // Return a loading state or empty div before mounting
+  if (!isMounted) {
+    return <div className="min-h-screen flex items-center justify-center bg-gray-100"></div>;
+  }
+  
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full">

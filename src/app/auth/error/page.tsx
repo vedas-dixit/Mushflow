@@ -5,7 +5,7 @@ import Link from "next/link";
 
 export default function AuthError() {
   const searchParams = useSearchParams();
-  const error = searchParams.get("error");
+  const error = searchParams?.get("error");
 
   const errorMessages: Record<string, string> = {
     Configuration: "There is a problem with the server configuration.",

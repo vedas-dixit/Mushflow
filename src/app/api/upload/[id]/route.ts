@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from "@/lib/auth";
 import { S3Client, DeleteObjectCommand } from '@aws-sdk/client-s3';
 
 // Initialize S3 client
@@ -13,10 +13,8 @@ const s3Client = new S3Client({
 });
 
 // DELETE handler for file deletion
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const session = await getServerSession(authOptions);
     console.log(params);
