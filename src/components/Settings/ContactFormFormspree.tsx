@@ -1,35 +1,22 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { X, Send } from 'lucide-react';
-import { useSession } from 'next-auth/react';
 
 interface ContactFormProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const ContactForm: React.FC<ContactFormProps> = ({ isOpen, onClose }) => {
-  const { data: session } = useSession();
+const ContactFormFormspree: React.FC<ContactFormProps> = ({ isOpen, onClose }) => {
   const [formData, setFormData] = useState({
     subject: '',
     message: '',
-    category: 'general',
-    userEmail: ''
+    category: 'general'
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
-  // Update the email whenever session changes
-  useEffect(() => {
-    if (session?.user?.email) {
-      setFormData(prev => ({
-        ...prev,
-        userEmail: session.user.email as string
-      }));
-    }
-  }, [session]);
   
   if (!isOpen) return null;
   
@@ -44,7 +31,8 @@ const ContactForm: React.FC<ContactFormProps> = ({ isOpen, onClose }) => {
     setError(null);
     
     try {
-      const response = await fetch('/api/contact-resend', {
+      // Replace YOUR_FORM_ID with your actual Formspree form ID
+      const response = await fetch('https://formspree.io/f/YOUR_FORM_ID', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -52,21 +40,19 @@ const ContactForm: React.FC<ContactFormProps> = ({ isOpen, onClose }) => {
         body: JSON.stringify(formData),
       });
       
-      const data = await response.json();
-      
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to send message');
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to send message');
       }
       
       setIsSubmitted(true);
       
       // Reset form after submission
-      setFormData(prev => ({
-        ...prev,
+      setFormData({
         subject: '',
         message: '',
         category: 'general'
-      }));
+      });
       
       // Close form after delay
       setTimeout(() => {
@@ -189,4 +175,4 @@ const ContactForm: React.FC<ContactFormProps> = ({ isOpen, onClose }) => {
   );
 };
 
-export default ContactForm; 
+export default ContactFormFormspree; 
