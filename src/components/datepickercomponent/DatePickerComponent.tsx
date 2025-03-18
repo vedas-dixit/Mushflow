@@ -60,7 +60,8 @@ const ModernDatePicker: React.FC<ModernDatePickerProps> = ({
         style={{ 
           top: '100%',  // Position below the button
           left: '15px',    // Align with left edge of button
-          marginTop: '8px'
+          marginTop: '8px',
+          transform: 'translateX(-70%)'
         }}
       >
           <DatePicker
@@ -82,7 +83,7 @@ const ModernDatePicker: React.FC<ModernDatePickerProps> = ({
         style={{ 
             top: '100%', 
             left: '15px',
-            marginTop: '8px'
+            marginTop: '20px'
           }}
         >
           <Calendar size={14} className="mr-1 text-blue-400" />
