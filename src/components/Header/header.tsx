@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useState, createContext, useContext } from 'react';
-import { Search, LayoutGrid, LogIn, LogOut, Music, Pin } from 'lucide-react';
+import React, { useEffect, useState, createContext, useContext, useRef } from 'react';
+import { Search, LayoutGrid, LogIn, LogOut, Music, Pin, X } from 'lucide-react';
 import { LightbulbIcon } from 'lucide-react';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import { useAppDispatch } from '@/redux/hooks';
@@ -26,6 +26,8 @@ type HeaderContextType = {
     setActiveNavId: (id: string) => void;
     searchQuery: string;
     setSearchQuery: (query: string) => void;
+    isSearchExpanded: boolean;
+    setIsSearchExpanded: (expanded: boolean) => void;
 };
 
 const HeaderContext = createContext<HeaderContextType | undefined>(undefined);
@@ -48,6 +50,7 @@ export const HeaderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     ]);
     const [activeNavId, setActiveNavId] = useState<string | null>('notes');
     const [searchQuery, setSearchQuery] = useState('');
+    const [isSearchExpanded, setIsSearchExpanded] = useState(false);
 
     const handleSetActiveNavId = (id: string) => {
         setActiveNavId(id);
@@ -65,7 +68,9 @@ export const HeaderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         activeNavId,
         setActiveNavId: handleSetActiveNavId,
         searchQuery,
-        setSearchQuery
+        setSearchQuery,
+        isSearchExpanded,
+        setIsSearchExpanded
     };
 
     return (
@@ -79,8 +84,36 @@ export const HeaderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 const HeaderWithContext = () => {
     const { data: session, status } = useSession();
     const isAuthenticated = status === 'authenticated';
-    const { navItems, setActiveNavId, searchQuery, setSearchQuery } = useHeader();
+    const { navItems, setActiveNavId, searchQuery, setSearchQuery, isSearchExpanded, setIsSearchExpanded } = useHeader();
     const dispatch = useAppDispatch();
+    const searchRef = useRef<HTMLDivElement>(null);
+    const [isClosing, setIsClosing] = useState(false);
+    
+    // Handle clicks outside of the search bar
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (searchRef.current && !searchRef.current.contains(event.target as Node) && isSearchExpanded) {
+                handleSearchClose();
+            }
+        }
+        
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [isSearchExpanded]);
+    
+    // Handle search close with animation
+    const handleSearchClose = () => {
+        if (isSearchExpanded && !isClosing) {
+            setIsClosing(true);
+            setTimeout(() => {
+                setIsSearchExpanded(false);
+                setIsClosing(false);
+            }, 280); // Slightly less than animation duration to prevent flicker
+        }
+    };
+    
     const handleNavItemClick = (id: string) => {
         setActiveNavId(id);
         
@@ -112,17 +145,36 @@ const HeaderWithContext = () => {
                     <span className="ml-2 text-xl text-white">MushFlow</span>
                 </div>
 
-                <div className="flex flex-1 mx-8">
-                    <div className="flex items-center w-full max-w-2xl bg-gray-100 rounded-lg px-4 py-2">
-                        <Search className="w-5 h-5 text-gray-500" />
+                {/* Desktop search - hidden on mobile */}
+                <div className="hidden md:flex flex-1 mx-8">
+                    <div className={`flex items-center w-full max-w-2xl bg-neutral-800 border ${searchQuery ? 'border-blue-500/70' : 'border-neutral-700'} rounded-full px-3 py-1.5 transition-all ease-in-out duration-200 hover:border-neutral-600 focus-within:border-neutral-500 focus-within:shadow-sm focus-within:shadow-neutral-700/50`}>
+                        <Search className={`w-4 h-4 ${searchQuery ? 'text-blue-400' : 'text-neutral-400'}`} />
                         <input
                             type="text"
-                            placeholder="Search"
+                            placeholder="Search tasks..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full ml-3 bg-transparent border-none outline-none placeholder-gray-500"
+                            className="w-full ml-3 bg-transparent border-none outline-none placeholder-neutral-500 text-neutral-300 text-sm"
                         />
+                        {searchQuery && (
+                            <button 
+                                onClick={() => setSearchQuery('')}
+                                className="p-0.5 rounded-full text-neutral-400 hover:text-white hover:bg-neutral-700 transition-colors"
+                            >
+                                <X size={14} />
+                            </button>
+                        )}
                     </div>
+                </div>
+
+                {/* Mobile Search Icon - visible only on mobile */}
+                <div className="flex md:hidden ml-auto mr-2">
+                    <button 
+                        onClick={() => isSearchExpanded ? handleSearchClose() : setIsSearchExpanded(true)}
+                        className="p-2 rounded-full text-neutral-300 hover:bg-neutral-700 hover:text-white transition-colors"
+                    >
+                        <Search className="w-5 h-5" />
+                    </button>
                 </div>
 
                 <div className="flex items-center ">
@@ -159,6 +211,43 @@ const HeaderWithContext = () => {
                     )}
                 </div>
             </div>
+
+            {/* Mobile expanded search overlay - appears when search is expanded */}
+            {(isSearchExpanded || isClosing) && (
+                <div 
+                    ref={searchRef}
+                    className={`fixed md:hidden top-0 left-0 right-0 z-40 bg-stone-800 p-3 shadow-md ${isClosing ? 'animate-slideUp' : 'animate-slideDown'}`}
+                >
+                    <div className="flex items-center">
+                        <div className={`flex items-center w-full bg-neutral-800 border ${searchQuery ? 'border-blue-500/70' : 'border-neutral-700'} rounded-full px-3 py-1.5`}>
+                            <Search className={`w-4 h-4 ${searchQuery ? 'text-blue-400' : 'text-neutral-400'}`} />
+                            <input
+                                type="text"
+                                placeholder="Search tasks..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full ml-3 bg-transparent border-none outline-none placeholder-neutral-500 text-neutral-300 text-sm"
+                                autoFocus
+                            />
+                            {searchQuery ? (
+                                <button 
+                                    onClick={() => setSearchQuery('')}
+                                    className="p-0.5 rounded-full text-neutral-400 hover:text-white hover:bg-neutral-700 transition-colors"
+                                >
+                                    <X size={14} />
+                                </button>
+                            ) : (
+                                <button 
+                                    onClick={handleSearchClose}
+                                    className="p-0.5 rounded-full text-neutral-400 hover:text-white hover:bg-neutral-700 transition-colors"
+                                >
+                                    <X size={14} />
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Desktop sidebar - hidden on mobile */}
             <div className="fixed top-0 left-0 h-screen bg-[#202124] text-gray-300 pt-16 w-12 hover:w-64 transition-all duration-300 group z-20 hidden md:flex flex-col justify-between">
@@ -225,7 +314,35 @@ function HeaderComponent() {
         { id: 'pinned', icon: <Pin className="w-5 h-5 min-w-[20px]" />, label: 'Pinned' },
     ]);
     const [searchQuery, setSearchQuery] = useState('');
+    const [isSearchExpanded, setIsSearchExpanded] = useState(false);
+    const [isClosing, setIsClosing] = useState(false);
+    const searchRef = useRef<HTMLDivElement>(null);
     const dispatch = useAppDispatch();
+    
+    // Handle clicks outside of the search bar
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (searchRef.current && !searchRef.current.contains(event.target as Node) && isSearchExpanded) {
+                handleSearchClose();
+            }
+        }
+        
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [isSearchExpanded]);
+    
+    // Handle search close with animation
+    const handleSearchClose = () => {
+        if (isSearchExpanded && !isClosing) {
+            setIsClosing(true);
+            setTimeout(() => {
+                setIsSearchExpanded(false);
+                setIsClosing(false);
+            }, 280); // Slightly less than animation duration to prevent flicker
+        }
+    };
     
     const handleNavItemClick = (id: string) => {
         setNavItems(prev => 
@@ -263,17 +380,36 @@ function HeaderComponent() {
                     </div>
                 </div>
 
-                <div className="flex flex-1 mx-8">
-                    <div className="flex items-center w-full max-w-2xl bg-gray-100 rounded-lg px-4 py-2">
-                        <Search className="w-5 h-5 text-gray-500" />
+                {/* Desktop search - hidden on mobile */}
+                <div className="hidden md:flex flex-1 mx-8">
+                    <div className={`flex items-center w-full max-w-2xl bg-neutral-800 border ${searchQuery ? 'border-blue-500/70' : 'border-neutral-700'} rounded-full px-3 py-1.5 transition-all duration-200 hover:border-neutral-600 focus-within:border-neutral-500 focus-within:shadow-sm focus-within:shadow-neutral-700/50`}>
+                        <Search className={`w-4 h-4 ${searchQuery ? 'text-blue-400' : 'text-neutral-400'}`} />
                         <input
                             type="text"
-                            placeholder="Search"
+                            placeholder="Search tasks..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full ml-3 bg-transparent border-none outline-none placeholder-gray-500"
+                            className="w-full ml-3 bg-transparent border-none outline-none placeholder-neutral-500 text-neutral-300 text-sm"
                         />
+                        {searchQuery && (
+                            <button 
+                                onClick={() => setSearchQuery('')}
+                                className="p-0.5 rounded-full text-neutral-400 hover:text-white hover:bg-neutral-700 transition-colors"
+                            >
+                                <X size={14} />
+                            </button>
+                        )}
                     </div>
+                </div>
+
+                {/* Mobile Search Icon - visible only on mobile */}
+                <div className="flex md:hidden ml-auto mr-2">
+                    <button 
+                        onClick={() => isSearchExpanded ? handleSearchClose() : setIsSearchExpanded(true)}
+                        className="p-2 rounded-full text-neutral-300 hover:bg-neutral-700 hover:text-white transition-colors"
+                    >
+                        <Search className="w-5 h-5" />
+                    </button>
                 </div>
 
                 <div className="flex items-center space-x-2">
@@ -329,6 +465,43 @@ function HeaderComponent() {
                     )}
                 </div>
             </div>
+
+            {/* Mobile expanded search overlay - appears when search is expanded */}
+            {(isSearchExpanded || isClosing) && (
+                <div 
+                    ref={searchRef}
+                    className={`fixed md:hidden top-0 left-0 right-0 z-40 bg-stone-800 p-3 shadow-md ${isClosing ? 'animate-slideUp' : 'animate-slideDown'}`}
+                >
+                    <div className="flex items-center">
+                        <div className={`flex items-center w-full bg-neutral-800 border ${searchQuery ? 'border-blue-500/70' : 'border-neutral-700'} rounded-full px-3 py-1.5`}>
+                            <Search className={`w-4 h-4 ${searchQuery ? 'text-blue-400' : 'text-neutral-400'}`} />
+                            <input
+                                type="text"
+                                placeholder="Search tasks..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full ml-3 bg-transparent border-none outline-none placeholder-neutral-500 text-neutral-300 text-sm"
+                                autoFocus
+                            />
+                            {searchQuery ? (
+                                <button 
+                                    onClick={() => setSearchQuery('')}
+                                    className="p-0.5 rounded-full text-neutral-400 hover:text-white hover:bg-neutral-700 transition-colors"
+                                >
+                                    <X size={14} />
+                                </button>
+                            ) : (
+                                <button 
+                                    onClick={handleSearchClose}
+                                    className="p-0.5 rounded-full text-neutral-400 hover:text-white hover:bg-neutral-700 transition-colors"
+                                >
+                                    <X size={14} />
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Desktop sidebar - hidden on mobile */}
             <div className="fixed top-0 left-0 h-screen bg-[#202124] text-gray-300 pt-16 w-12 hover:w-64 transition-all duration-300 group z-20 hidden md:flex flex-col justify-between">

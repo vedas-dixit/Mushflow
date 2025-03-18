@@ -58,7 +58,7 @@ function CardBox({ tasks: initialTasks, onTaskUpdate, onTaskDelete }: CardBoxPro
     } else if (tasks.length === 0 && initialTasks.length > 0) {
       return "No tasks match your filters";
     }
-    return "Add your first task";
+    return "No tasks";
   };
   
   return (
