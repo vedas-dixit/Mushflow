@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
-    // Query all rooms
+    console.log(request);
     const result = await docClient.send(new QueryCommand({
       TableName: MAIN_TABLE_NAME,
       IndexName: 'GSI1',

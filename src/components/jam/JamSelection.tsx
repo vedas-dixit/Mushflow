@@ -5,15 +5,12 @@ import { Music, Users, Code } from 'lucide-react';
 import CreateRoomModal from './CreateRoomModal';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { 
-  setRoomData, 
-  setJoiningRoom, 
   setError, 
   JamState, 
   createRoom, 
   joinRoom, 
   fetchRooms 
 } from '@/redux/features/jamSlice';
-import Link from 'next/link';
 
 interface JamSelectionProps {
   onRoomCreated: (roomId: string, roomCode: string, roomName: string, bannerId: number) => void;
@@ -31,7 +28,6 @@ export default function JamSelection({
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [joinCode, setJoinCode] = useState('');
   const [roomName, setRoomName] = useState('');
-  const [bannerId, setBannerId] = useState(1);
   
   const dispatch = useAppDispatch();
   const jamState = useAppSelector(state => state.jam) as JamState;
@@ -45,7 +41,7 @@ export default function JamSelection({
   // Handle room creation
   const handleCreateRoom = async (modalRoomName?: string, modalBannerId?: number) => {
     const nameToUse = modalRoomName || roomName;
-    const bannerToUse = modalBannerId || bannerId;
+    const bannerToUse = modalBannerId || 1;
     
     if (!nameToUse.trim()) {
       dispatch(setError('Please enter a room name'));

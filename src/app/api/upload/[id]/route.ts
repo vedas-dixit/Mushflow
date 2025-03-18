@@ -19,7 +19,7 @@ export async function DELETE(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    
+    console.log(params);
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

@@ -210,7 +210,7 @@ export async function deleteTask(taskId: string, userId: string): Promise<boolea
       throw new Error(errorData.error || `Failed to delete task: ${response.status} ${response.statusText}`);
     }
 
-    const data = await response.json();
+    // const data = await response.json();
     console.log('Task deleted successfully');
     return true;
   } catch (error) {

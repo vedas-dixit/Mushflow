@@ -10,6 +10,7 @@ const TRACKS_TABLE_NAME = process.env.TRACKS_DYNAMODB_TABLE || 'MushflowTracks';
 const TABLE_NAME = TRACKS_TABLE_NAME || process.env.DYNAMODB_TABLE;
 
 export async function GET(request: NextRequest) {
+  console.log(request);
   try {
     const session = await getServerSession(authOptions);
     

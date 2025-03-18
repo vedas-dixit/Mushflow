@@ -2,13 +2,13 @@
 
 import React, { useEffect } from 'react';
 import { useSession, signIn } from 'next-auth/react';
-import { Music, LogIn, X } from 'lucide-react';
+import {LogIn} from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '@/redux/hooks';
 import { hideLogin } from '@/redux/features/authSlice';
 import AnimatedMushIcon from '../animIcon/AnimMushIcon';
 
 export default function LoginModal() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const dispatch = useAppDispatch();
   const { showLoginModal } = useAppSelector(state => state.auth);
   

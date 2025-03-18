@@ -2,8 +2,8 @@
 
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
-import { useAppDispatch, useAppSelector } from '@/redux/hooks';
-import { setCreatingRoom, JamState } from '@/redux/features/jamSlice';
+import { useAppSelector } from '@/redux/hooks';
+import { JamState } from '@/redux/features/jamSlice';
 
 // Banner options
 const bannerOptions = [
@@ -27,13 +27,10 @@ interface CreateRoomModalProps {
 export default function CreateRoomModal({
   onClose,
   onRoomCreated,
-  userId,
-  userName
 }: CreateRoomModalProps) {
   const [roomName, setRoomName] = useState('');
   const [selectedBanner, setSelectedBanner] = useState(bannerOptions[0].id);
   
-  const dispatch = useAppDispatch();
   const jamState = useAppSelector(state => state.jam) as JamState;
   const { isCreatingRoom } = jamState;
 
@@ -54,21 +51,6 @@ export default function CreateRoomModal({
   const handleCreateRoom = async () => {
     const finalRoomName = getDisplayRoomName();
     onRoomCreated(finalRoomName, selectedBanner);
-  };
-
-  // Get emoji for banner ID
-  const getBannerEmoji = (bannerId: number) => {
-    switch (bannerId) {
-      case 1: return '📚'; // Library
-      case 2: return '🌧️'; // Rainy
-      case 3: return '🌙'; // Night
-      case 4: return '☕'; // Coffee
-      case 5: return '🌲'; // Forest
-      case 6: return '🏙️'; // Urban
-      case 7: return '🏛️'; // Campus
-      case 8: return '💻'; // Minimal
-      default: return '📚';
-    }
   };
 
   return (

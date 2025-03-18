@@ -1,8 +1,8 @@
 "use client"
 import React, { useState, useRef, useEffect } from 'react';
-import { Image, Undo, Redo, X, Pin, Calendar, Tag, Flag, Paperclip } from 'lucide-react';
+import { Undo, Redo, X, Pin, Tag, Flag } from 'lucide-react';
 import { PlaceholderText } from '@/utils/usePlaceholdertext';
-import { useHistory, createDebouncedSave, HistoryState } from '@/utils/useHandleAddHistory';
+import { useHistory, createDebouncedSave } from '@/utils/useHandleAddHistory';
 import ModernDatePicker from '../datepickercomponent/DatePickerComponent';
 import { saveTask } from '@/utils/taskService';
 import { TaskPriority } from '@/types/Task';

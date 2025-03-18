@@ -1,11 +1,10 @@
 "use client";
 import React, { useEffect, useState, useRef } from "react";
-import { Pin, CheckCircle, Calendar, X, Flag, Tag, Plus, Trash2, CheckCircle2, Paperclip, Download, Eye, XCircle } from "lucide-react";
+import { Pin, Calendar, X, Flag, Trash2, CheckCircle2, Paperclip, Download, Eye, } from "lucide-react";
 import { format } from "date-fns";
 import { Task, TaskPriority } from "@/types/Task";
 import { PredefinedLabels } from "@/utils/predefinedLabels";
 import { updateTask, deleteTask } from "@/utils/taskService";
-import { useSession } from "next-auth/react";
 import ModernDatePicker from "../datepickercomponent/DatePickerComponent";
 import { uploadAttachments, deleteAttachment, formatFileSize, getFileIcon } from "@/utils/attachmentService";
 
@@ -51,7 +50,6 @@ function Card({
   onUpdate,
   onDelete
 }: CardProps) {
-  const { data: session } = useSession();
   const [isPinned, setIsPinned] = useState(pinned);
   const [isCompleted, setIsCompleted] = useState(completed);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -68,10 +66,7 @@ function Card({
   const datePickerRef = useRef<HTMLDivElement>(null);
   const priorityMenuRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isTruncated, setIsTruncated] = useState(true);
   const MAX_CONTENT_LINES = 6;
-  const [datePickerPosition, setDatePickerPosition] = useState({ top: 0, left: 0 });
-  const dateButtonRef = useRef<HTMLButtonElement>(null);
 
   // Debug initial attachments
   useEffect(() => {
@@ -294,7 +289,7 @@ function Card({
       return editedContent;
     }
     
-    if (isTruncated && editedContent.length > MAX_CONTENT_LINES) {
+    if (editedContent.length > MAX_CONTENT_LINES) {
       return editedContent.slice(0, MAX_CONTENT_LINES);
     }
     
@@ -506,7 +501,7 @@ function Card({
                       {item}
                     </p>
                   ))}
-                  {isTruncated && editedContent.length > MAX_CONTENT_LINES && (
+                  {editedContent.length > MAX_CONTENT_LINES && (
                     <p className="text-gray-400 text-xs">
                       ... {editedContent.length - MAX_CONTENT_LINES} more items
                     </p>

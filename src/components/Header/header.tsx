@@ -1,17 +1,13 @@
 "use client";
 
-import React, { useEffect, useState, createContext, useContext, useRef } from 'react';
+import React, { useEffect, useState, createContext, useContext } from 'react';
 import { Search, LayoutGrid, LogIn, LogOut, Music, Pin } from 'lucide-react';
-import { LightbulbIcon, Bell, PencilLine, Archive, Trash } from 'lucide-react';
+import { LightbulbIcon } from 'lucide-react';
 import { useSession, signIn, signOut } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import { useAppDispatch, useAppSelector } from '@/redux/hooks';
-import { JamState } from '@/redux/features/jamSlice';
+import { useAppDispatch } from '@/redux/hooks';
 import { setCurrentView } from '@/redux/features/navigationSlice';
 import { showLogin } from '@/redux/features/authSlice';
 import { SettingsButton } from '@/components/Settings';
-import Image from 'next/image';
-import Link from 'next/link';
 import AnimatedMushIcon from '../animIcon/AnimMushIcon';
 
 type NavItem = {
@@ -81,15 +77,10 @@ export const HeaderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
 // The internal component that uses the context
 const HeaderWithContext = () => {
-    const router = useRouter();
     const { data: session, status } = useSession();
     const isAuthenticated = status === 'authenticated';
     const { navItems, setActiveNavId, searchQuery, setSearchQuery } = useHeader();
-    const mushhovered = useRef<HTMLDivElement | null>(null);
-    const [mushsrc, setMushsrc] = useState("/mush1.svg");
     const dispatch = useAppDispatch();
-    const jamState = useAppSelector(state => state.jam) as JamState;
-    
     const handleNavItemClick = (id: string) => {
         setActiveNavId(id);
         
@@ -112,26 +103,6 @@ const HeaderWithContext = () => {
         }
       }, [status, dispatch]);
 
-    useEffect(() => {
-        const mush = mushhovered.current;
-        if (mush) {
-            console.log("mush element is available:", mush);
-            
-            const handleMouseEnter = () => {
-                setMushsrc("/mush2.svg");
-            };
-            const handleMouseLeave = () => {
-                setMushsrc("/mush1.svg");
-            };
-            
-            mush.addEventListener('mouseenter', handleMouseEnter);
-            mush.addEventListener('mouseleave', handleMouseLeave);
-            return () => {
-                mush.removeEventListener('mouseenter', handleMouseEnter);
-                mush.removeEventListener('mouseleave', handleMouseLeave);
-            };
-        }
-    }, []);
 
     return (
         <>
@@ -171,7 +142,7 @@ const HeaderWithContext = () => {
                                         alt={session.user.name || "Profile"}
                                         className="w-8 h-8 rounded-full"
                                         onError={(e) => {
-                                            console.log("Image failed to load:", session.user.image);
+                                            console.log("Image failed to load:", session.user.image,e);
                                             // e.currentTarget.src = "/default-avatar.png"; // Fallback image
                                         }}
                                     />
@@ -246,7 +217,6 @@ const HeaderWithContext = () => {
 
 // Standalone component that doesn't require the context
 function HeaderComponent() {
-    const router = useRouter();
     const { data: session, status } = useSession();
     const isAuthenticated = status === 'authenticated';
     const [navItems, setNavItems] = useState<NavItem[]>([

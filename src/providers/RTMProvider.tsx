@@ -2,8 +2,8 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import AgoraRTM from 'agora-rtm-sdk';
-import { useAppDispatch, useAppSelector } from '@/redux/hooks';
-import { addMessage, updateParticipants, updatePlaybackState, setRTMConnected, addParticipant, removeParticipant, fetchRoomDetails } from '@/redux/features/jamSlice';
+import { useAppDispatch } from '@/redux/hooks';
+import { addMessage, updateParticipants, updatePlaybackState, setRTMConnected, addParticipant, removeParticipant } from '@/redux/features/jamSlice';
 import { useSession } from 'next-auth/react';
 
 // Define the RTM context type
@@ -40,26 +40,26 @@ interface Participant {
   joinedAt: string;
 }
 
-interface Track {
-  id: string;
-  title: string;
-  artist: string;
-  duration: number;
-  url: string;
-  attribution: string;
-}
+// interface Track {
+//   id: string;
+//   title: string;
+//   artist: string;
+//   duration: number;
+//   url: string;
+//   attribution: string;
+// }
 
-interface PlaybackState {
-  isPlaying: boolean;
-  currentTrack: Track | null;
-  trackStartTime: string | null;
-}
+// interface PlaybackState {
+//   isPlaying: boolean;
+//   currentTrack: Track | null;
+//   trackStartTime: string | null;
+// }
 
 export function RTMProvider({ children }: RTMProviderProps) {
   const [client, setClient] = useState<any>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [currentRoomId, setCurrentRoomId] = useState<string | null>(null);
-  const [participants, setParticipants] = useState<Participant[]>([]);
+  // const [participants, setParticipants] = useState<Participant[]>([]);
   
   const dispatch = useAppDispatch();
   const { data: session } = useSession();
@@ -299,8 +299,8 @@ export function RTMProvider({ children }: RTMProviderProps) {
             joinedAt: new Date().toISOString()
           }));
           
-          // Update local state
-          setParticipants(newParticipants);
+          // // Update local state
+          // setParticipants(newParticipants);
           dispatch(updateParticipants(newParticipants));
           
           // Send a system message that we joined
@@ -415,7 +415,7 @@ export function RTMProvider({ children }: RTMProviderProps) {
       
       // Clear the current room ID and connection state
       setCurrentRoomId(null);
-      setParticipants([]);
+      // setParticipants([]);
       setIsConnected(false);
       dispatch(setRTMConnected(false));
       
@@ -424,7 +424,7 @@ export function RTMProvider({ children }: RTMProviderProps) {
       console.error('Error leaving channel:', error);
       // Still clear the state even if there was an error
       setCurrentRoomId(null);
-      setParticipants([]);
+      // setParticipants([]);
       setIsConnected(false);
       dispatch(setRTMConnected(false));
     }
@@ -626,14 +626,14 @@ export function RTMProvider({ children }: RTMProviderProps) {
   };
   
   // Provide the RTM context
-  const contextValue: RTMContextType = {
-    isConnected,
-    joinChannel,
-    leaveChannel,
-    sendChannelMessage,
-    sendPlaybackCommand,
-    sendParticipantUpdate,
-  };
+  // const contextValue: RTMContextType = {
+  //   isConnected,
+  //   joinChannel,
+  //   leaveChannel,
+  //   sendChannelMessage,
+  //   sendPlaybackCommand,
+  //   sendParticipantUpdate,
+  // };
   
   return (
     <RTMContext.Provider value={{

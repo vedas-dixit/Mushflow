@@ -27,7 +27,7 @@ export default function MusicVisualization({ isPlaying }: MusicVisualizationProp
     
     // Simple animation for demonstration
     let animationId: number;
-    let particles: { x: number; y: number; size: number; speed: number; color: string }[] = [];
+    const particles: { x: number; y: number; size: number; speed: number; color: string }[] = [];
     
     // Create particles
     for (let i = 0; i < 50; i++) {
