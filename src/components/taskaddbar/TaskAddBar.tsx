@@ -391,7 +391,7 @@ function TaskAddBar({ onTaskAdd }: TaskAddBarProps) {
   };
 
   return (
-    <div className="fixed z-5 top-20 left-1/2 transform -translate-x-1/2 md:translate-x-[calc(-50%+32px)] w-full max-w-2xl px-4">
+    <div className="fixed z-[1] top-20 left-1/2 transform -translate-x-1/2 md:translate-x-[calc(-50%+32px)] w-full max-w-2xl px-4">
       <div
         ref={containerRef}
         className={`bg-neutral-800 rounded-lg shadow-lg transition-all duration-200 max-h-[80vh] overflow-hidden ${isExpanded ? 'p-4' : 'p-2'}`}

@@ -227,7 +227,7 @@ function TaskFilter({ tasks, onFilterChange }: TaskFilterProps) {
   };
   
   return (
-    <div className="fixed z-[1] top-20 right-8 md:right-20">
+    <div className="fixed z-[2] top-20 right-8 md:right-20">
       <div className="relative">
         {/* Filter Button */}
         <button
