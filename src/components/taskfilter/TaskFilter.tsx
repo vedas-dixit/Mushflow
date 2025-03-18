@@ -29,6 +29,11 @@ function TaskFilter({ tasks, onFilterChange }: TaskFilterProps) {
   const priorityMenuRef = useRef<HTMLDivElement>(null);
   const sortMenuRef = useRef<HTMLDivElement>(null);
   
+  // Refs for tracking header elements
+  const labelsHeaderRef = useRef<HTMLDivElement>(null);
+  const priorityHeaderRef = useRef<HTMLDivElement>(null);
+  const sortHeaderRef = useRef<HTMLDivElement>(null);
+  
   // Apply filters and sorting to tasks
   useEffect(() => {
     let filteredResults = [...tasks];
@@ -87,38 +92,85 @@ function TaskFilter({ tasks, onFilterChange }: TaskFilterProps) {
     onFilterChange(filteredResults);
   }, [tasks, selectedLabels, selectedPriorities, sortField, sortDirection, onFilterChange]);
   
-  // Handle click outside to close menus
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      // Close labels menu when clicking outside
-      if (labelsMenuRef.current && !labelsMenuRef.current.contains(event.target as Node)) {
-        setShowLabelsMenu(false);
+  // Completely new toggle approach using direct state changes
+  const setDropdownState = (
+    dropdown: 'labels' | 'priority' | 'sort',
+    newState: boolean
+  ) => {
+    if (dropdown === 'labels') {
+      setShowLabelsMenu(newState);
+      if (newState) {
+        setShowPriorityMenu(false);
+        setShowSortMenu(false);
       }
-      
-      // Close priority menu when clicking outside
-      if (priorityMenuRef.current && !priorityMenuRef.current.contains(event.target as Node)) {
+    } else if (dropdown === 'priority') {
+      setShowPriorityMenu(newState);
+      if (newState) {
+        setShowLabelsMenu(false);
+        setShowSortMenu(false);
+      }
+    } else if (dropdown === 'sort') {
+      setShowSortMenu(newState);
+      if (newState) {
+        setShowLabelsMenu(false);
         setShowPriorityMenu(false);
       }
+    }
+  };
+
+  // These are now pure functions without event handling complexity
+  const toggleLabelsMenu = () => setDropdownState('labels', !showLabelsMenu);
+  const togglePriorityMenu = () => setDropdownState('priority', !showPriorityMenu);
+  const toggleSortMenu = () => setDropdownState('sort', !showSortMenu);
+  
+  // Set up global mousedown listener to handle all clicks
+  useEffect(() => {
+    const handleGlobalMouseDown = (e: MouseEvent) => {
+      const target = e.target as Node;
       
-      // Close sort menu when clicking outside
-      if (sortMenuRef.current && !sortMenuRef.current.contains(event.target as Node)) {
+      // If clicking on a header, toggle that dropdown
+      if (labelsHeaderRef.current?.contains(target)) {
+        e.preventDefault();
+        toggleLabelsMenu();
+        return;
+      }
+      
+      if (priorityHeaderRef.current?.contains(target)) {
+        e.preventDefault();
+        togglePriorityMenu();
+        return;
+      }
+      
+      if (sortHeaderRef.current?.contains(target)) {
+        e.preventDefault();
+        toggleSortMenu();
+        return;
+      }
+      
+      // If clicking outside any menu, close all menus
+      if (!labelsMenuRef.current?.contains(target) && 
+          !priorityMenuRef.current?.contains(target) && 
+          !sortMenuRef.current?.contains(target)) {
+        setShowLabelsMenu(false);
+        setShowPriorityMenu(false);
         setShowSortMenu(false);
       }
       
       // Close filter panel when clicking outside
-      if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
+      if (filterRef.current && !filterRef.current.contains(target)) {
         setIsFilterOpen(false);
       }
     };
     
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('mousedown', handleGlobalMouseDown);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('mousedown', handleGlobalMouseDown);
     };
-  }, []);
+  }, [showLabelsMenu, showPriorityMenu, showSortMenu]);
   
   // Toggle label selection
-  const toggleLabel = (labelId: string) => {
+  const toggleLabel = (labelId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     setSelectedLabels(prev => 
       prev.includes(labelId)
         ? prev.filter(id => id !== labelId)
@@ -127,7 +179,8 @@ function TaskFilter({ tasks, onFilterChange }: TaskFilterProps) {
   };
   
   // Toggle priority selection
-  const togglePriority = (priority: TaskPriority) => {
+  const togglePriority = (priority: TaskPriority, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     setSelectedPriorities(prev => 
       prev.includes(priority)
         ? prev.filter(p => p !== priority)
@@ -136,7 +189,8 @@ function TaskFilter({ tasks, onFilterChange }: TaskFilterProps) {
   };
   
   // Set sort field and direction
-  const handleSort = (field: SortField) => {
+  const handleSort = (field: SortField, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     if (sortField === field) {
       // Toggle direction if the same field is selected
       setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
@@ -146,28 +200,6 @@ function TaskFilter({ tasks, onFilterChange }: TaskFilterProps) {
       setSortDirection('desc');
     }
     setShowSortMenu(false);
-  };
-  
-  // Toggle menu visibility with stopPropagation
-  const toggleLabelsMenu = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setShowLabelsMenu(!showLabelsMenu);
-    setShowPriorityMenu(false);
-    setShowSortMenu(false);
-  };
-
-  const togglePriorityMenu = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setShowPriorityMenu(!showPriorityMenu);
-    setShowLabelsMenu(false);
-    setShowSortMenu(false);
-  };
-
-  const toggleSortMenu = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setShowSortMenu(!showSortMenu);
-    setShowLabelsMenu(false);
-    setShowPriorityMenu(false);
   };
   
   // Clear all filters
@@ -234,7 +266,7 @@ function TaskFilter({ tasks, onFilterChange }: TaskFilterProps) {
             <div className="mb-4">
               <div className="relative">
                 <div
-                  onClick={toggleLabelsMenu}
+                  ref={labelsHeaderRef}
                   className="flex items-center justify-between w-full px-3 py-2 bg-neutral-700 rounded-md text-white cursor-pointer"
                 >
                   <div className="flex items-center">
@@ -263,7 +295,7 @@ function TaskFilter({ tasks, onFilterChange }: TaskFilterProps) {
                     <button 
                       key={label.id}
                       className={`flex items-center w-full px-2 py-1.5 hover:bg-neutral-600 rounded mb-1 ${selectedLabels.includes(label.id) ? 'bg-neutral-600' : ''}`}
-                      onClick={(e) => toggleLabel(label.id)}
+                      onClick={(e) => toggleLabel(label.id, e)}
                       style={{ color: label.color }}
                     >
                       <div 
@@ -293,7 +325,7 @@ function TaskFilter({ tasks, onFilterChange }: TaskFilterProps) {
                         {label.name}
                         <button 
                           className="ml-1 hover:text-white"
-                          onClick={(e) => toggleLabel(label.id)}
+                          onClick={(e) => toggleLabel(label.id, e)}
                         >
                           <X size={12} />
                         </button>
@@ -308,7 +340,7 @@ function TaskFilter({ tasks, onFilterChange }: TaskFilterProps) {
             <div className="mb-4">
               <div className="relative">
                 <div
-                  onClick={togglePriorityMenu}
+                  ref={priorityHeaderRef}
                   className="flex items-center justify-between w-full px-3 py-2 bg-neutral-700 rounded-md text-white cursor-pointer"
                 >
                   <div className="flex items-center">
@@ -335,7 +367,7 @@ function TaskFilter({ tasks, onFilterChange }: TaskFilterProps) {
                 >
                   <button 
                     className={`flex items-center w-full px-2 py-1.5 text-red-500 hover:bg-neutral-600 rounded mb-1 ${selectedPriorities.includes('high') ? 'bg-neutral-600' : ''}`}
-                    onClick={(e) => togglePriority('high')}
+                    onClick={(e) => togglePriority('high', e)}
                   >
                     <Flag size={14} className="mr-2" />
                     High
@@ -345,7 +377,7 @@ function TaskFilter({ tasks, onFilterChange }: TaskFilterProps) {
                   </button>
                   <button 
                     className={`flex items-center w-full px-2 py-1.5 text-yellow-500 hover:bg-neutral-600 rounded mb-1 ${selectedPriorities.includes('medium') ? 'bg-neutral-600' : ''}`}
-                    onClick={(e) => togglePriority('medium')}
+                    onClick={(e) => togglePriority('medium', e)}
                   >
                     <Flag size={14} className="mr-2" />
                     Medium
@@ -355,7 +387,7 @@ function TaskFilter({ tasks, onFilterChange }: TaskFilterProps) {
                   </button>
                   <button 
                     className={`flex items-center w-full px-2 py-1.5 text-green-500 hover:bg-neutral-600 rounded ${selectedPriorities.includes('low') ? 'bg-neutral-600' : ''}`}
-                    onClick={(e) => togglePriority('low')}
+                    onClick={(e) => togglePriority('low', e)}
                   >
                     <Flag size={14} className="mr-2" />
                     Low
@@ -377,7 +409,7 @@ function TaskFilter({ tasks, onFilterChange }: TaskFilterProps) {
                       {priority.charAt(0).toUpperCase() + priority.slice(1)}
                       <button 
                         className="ml-1 hover:text-white"
-                        onClick={(e) => togglePriority(priority)}
+                        onClick={(e) => togglePriority(priority, e)}
                       >
                         <X size={12} />
                       </button>
@@ -391,7 +423,7 @@ function TaskFilter({ tasks, onFilterChange }: TaskFilterProps) {
             <div>
               <div className="relative">
                 <div
-                  onClick={toggleSortMenu}
+                  ref={sortHeaderRef}
                   className="flex items-center justify-between w-full px-3 py-2 bg-neutral-700 rounded-md text-white cursor-pointer"
                 >
                   <div className="flex items-center">
@@ -420,7 +452,7 @@ function TaskFilter({ tasks, onFilterChange }: TaskFilterProps) {
                 >
                   <button 
                     className={`flex items-center justify-between w-full px-2 py-1.5 hover:bg-neutral-600 rounded mb-1 ${sortField === 'dueDate' ? 'text-blue-400' : 'text-white'}`}
-                    onClick={(e) => handleSort('dueDate')}
+                    onClick={(e) => handleSort('dueDate', e)}
                   >
                     <div className="flex items-center">
                       <Calendar size={14} className="mr-2" />
@@ -430,7 +462,7 @@ function TaskFilter({ tasks, onFilterChange }: TaskFilterProps) {
                   </button>
                   <button 
                     className={`flex items-center justify-between w-full px-2 py-1.5 hover:bg-neutral-600 rounded mb-1 ${sortField === 'createdAt' ? 'text-blue-400' : 'text-white'}`}
-                    onClick={(e) => handleSort('createdAt')}
+                    onClick={(e) => handleSort('createdAt', e)}
                   >
                     <div className="flex items-center">
                       <Calendar size={14} className="mr-2" />
@@ -440,7 +472,7 @@ function TaskFilter({ tasks, onFilterChange }: TaskFilterProps) {
                   </button>
                   <button 
                     className={`flex items-center justify-between w-full px-2 py-1.5 hover:bg-neutral-600 rounded ${sortField === 'priority' ? 'text-blue-400' : 'text-white'}`}
-                    onClick={(e) => handleSort('priority')}
+                    onClick={(e) => handleSort('priority', e)}
                   >
                     <div className="flex items-center">
                       <Flag size={14} className="mr-2" />

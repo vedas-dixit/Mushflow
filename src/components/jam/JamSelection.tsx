@@ -30,6 +30,8 @@ export default function JamSelection({
 }: JamSelectionProps) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [joinCode, setJoinCode] = useState('');
+  const [roomName, setRoomName] = useState('');
+  const [bannerId, setBannerId] = useState(1);
   
   const dispatch = useAppDispatch();
   const jamState = useAppSelector(state => state.jam) as JamState;
@@ -41,15 +43,22 @@ export default function JamSelection({
   }, [dispatch]);
 
   // Handle room creation
-  const handleCreateRoom = async (roomName: string, bannerId: number) => {
+  const handleCreateRoom = async (modalRoomName?: string, modalBannerId?: number) => {
+    const nameToUse = modalRoomName || roomName;
+    const bannerToUse = modalBannerId || bannerId;
+    
+    if (!nameToUse.trim()) {
+      dispatch(setError('Please enter a room name'));
+      return;
+    }
+    
     try {
-      const resultAction = await dispatch(createRoom({ name: roomName, bannerId }));
+      const resultAction = await dispatch(createRoom({ name: nameToUse, bannerId: bannerToUse }));
       if (createRoom.fulfilled.match(resultAction)) {
         const room = resultAction.payload;
         console.log("Created room:", room);
         if (room && room.id) {
           onRoomCreated(room.id, room.code, room.name, room.bannerId);
-          setShowCreateModal(false);
         } else {
           console.error("Invalid room data received:", room);
           dispatch(setError('Failed to create room: Invalid response data'));
@@ -87,22 +96,38 @@ export default function JamSelection({
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen p-4 relative">
-      <div className="w-full max-w-md bg-neutral-800 rounded-xl shadow-xl overflow-hidden">
+    <div className="flex flex-col items-center justify-center h-screen p-4 relative bg-gradient-to-b from-black to-neutral-900 noise-bg ml-0 md:ml-11">
+      <div className="w-full max-w-md bg-black/40 backdrop-blur-md border border-white/10 rounded-xl shadow-xl overflow-hidden z-10">
         <div className="p-8">
           <div className="text-center mb-8">
             <div className="flex justify-center mb-4">
-              <div className="bg-amber-500/20 p-4 rounded-full">
+              <div className="bg-gradient-to-br from-amber-500/20 to-amber-700/20 p-4 rounded-full">
                 <Music size={32} className="text-amber-500" />
               </div>
             </div>
-            <h1 className="text-2xl font-bold mb-2">Welcome to JAM Sessions</h1>
-            <p className="text-neutral-400">
+            <h1 className="text-2xl font-bold mb-2 text-white">Welcome to JAM Sessions</h1>
+            <p className="text-white/60">
               Study together with synchronized music and chat
             </p>
           </div>
 
           <div className="space-y-6">
+            <div>
+              <label htmlFor="roomName" className="block text-sm font-medium text-white/70 mb-2">
+                Room Name
+              </label>
+              <input
+                type="text"
+                id="roomName"
+                value={roomName}
+                onChange={(e) => setRoomName(e.target.value)}
+                className="w-full bg-black/50 border border-white/20 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                placeholder="My Awesome JAM Session"
+              />
+            </div>
+            
+
+            
             <button
               onClick={() => setShowCreateModal(true)}
               disabled={isCreatingRoom}
@@ -111,13 +136,14 @@ export default function JamSelection({
               <Users size={18} className="mr-2" />
               {isCreatingRoom ? 'Creating...' : 'Create a New Room'}
             </button>
+            <p className="text-xs text-center text-white/50 mt-1">Click to customize your room banner and settings</p>
 
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-neutral-700"></div>
+                <div className="w-full border-t border-white/10"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-neutral-800 text-neutral-400">or join with code</span>
+                <span className="px-2 bg-black/40 text-white/60">or join with code</span>
               </div>
             </div>
 
@@ -129,22 +155,22 @@ export default function JamSelection({
                     value={joinCode}
                     onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
                     placeholder="Enter room code"
-                    className="w-full bg-neutral-700 border border-neutral-600 rounded-lg py-3 px-4 text-white placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                    className="w-full bg-white/5 border border-white/10 rounded-lg py-3 px-4 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                     maxLength={6}
                   />
                   <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                    <Code size={18} className="text-neutral-400" />
+                    <Code size={18} className="text-white/40" />
                   </div>
                 </div>
                 {error && (
-                  <p className="mt-2 text-red-500 text-sm">{error}</p>
+                  <p className="mt-2 text-red-400 text-sm">{error}</p>
                 )}
               </div>
 
               <button
                 onClick={handleJoinRoom}
                 disabled={isJoiningRoom}
-                className="w-full bg-neutral-700 hover:bg-neutral-600 text-white font-medium py-3 px-4 rounded-lg flex items-center justify-center transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-white/10 hover:bg-white/20 text-white font-medium py-3 px-4 rounded-lg flex items-center justify-center transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isJoiningRoom ? 'Joining...' : 'Join Room'}
               </button>
@@ -155,10 +181,10 @@ export default function JamSelection({
             <div className="mt-8">
               <div className="relative mb-4">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-neutral-700"></div>
+                  <div className="w-full border-t border-white/10"></div>
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-neutral-800 text-neutral-400">Available Rooms</span>
+                  <span className="px-2 bg-black/40 text-white/60">Available Rooms</span>
                 </div>
               </div>
               
@@ -167,16 +193,16 @@ export default function JamSelection({
                   <div 
                     key={room.id}
                     onClick={() => setJoinCode(room.code)}
-                    className="bg-neutral-700 hover:bg-neutral-600 rounded-lg p-3 cursor-pointer transition-colors"
+                    className="bg-white/5 hover:bg-white/10 rounded-lg p-3 cursor-pointer transition-colors"
                   >
                     <div className="flex justify-between items-center">
                       <div>
                         <h3 className="font-medium text-white">{room.name}</h3>
-                        <p className="text-xs text-neutral-400">
+                        <p className="text-xs text-white/60">
                           {room.participantCount} {room.participantCount === 1 ? 'participant' : 'participants'}
                         </p>
                       </div>
-                      <div className="bg-neutral-800 px-2 py-1 rounded text-xs font-mono">
+                      <div className="bg-black/40 px-2 py-1 rounded text-xs font-mono text-amber-400">
                         {room.code}
                       </div>
                     </div>
@@ -188,11 +214,13 @@ export default function JamSelection({
         </div>
       </div>
 
-
       {showCreateModal && (
         <CreateRoomModal
           onClose={() => setShowCreateModal(false)}
-          onRoomCreated={handleCreateRoom}
+          onRoomCreated={(modalRoomName, modalBannerId) => {
+            handleCreateRoom(modalRoomName, modalBannerId);
+            setShowCreateModal(false);
+          }}
           userId={userId}
           userName={userName}
         />

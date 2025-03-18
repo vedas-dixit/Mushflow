@@ -56,7 +56,7 @@ const ModernDatePicker: React.FC<ModernDatePickerProps> = ({
       {/* Calendar dropdown - Add higher z-index and fixed positioning */}
       {isOpen && (
         <div 
-        className="absolute z-[9999]"
+        className="absolute z-30"
         style={{ 
           top: '100%',  // Position below the button
           left: '15px',    // Align with left edge of button
@@ -71,14 +71,14 @@ const ModernDatePicker: React.FC<ModernDatePickerProps> = ({
             }}
             inline
             calendarClassName="modern-dark-calendar"
-            popperClassName="z-[99999]"
+            popperClassName="z-30"
           />
         </div>
       )}
       
 
       {selectedDate && (
-        <div className="absolute z-[9999] text-sm text-gray-300 flex items-center bg-neutral-700/90 px-2 py-1 rounded-md whitespace-nowrap"
+        <div className="absolute z-30 text-sm text-gray-300 flex items-center bg-neutral-700/90 px-2 py-1 rounded-md whitespace-nowrap"
         style={{ 
             top: '100%', 
             left: '15px',
