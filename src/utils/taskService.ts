@@ -3,6 +3,11 @@ import { store } from '@/redux/store';
 import { setLoading } from '@/redux/features/loaderSlice';
 
 /**
+ * Check if code is running in a browser environment
+ */
+const isBrowser = typeof window !== 'undefined';
+
+/**
  * Save a task to the database
  */
 export async function saveTask(taskData: CreateTaskInput): Promise<Task> {
@@ -32,7 +37,7 @@ export async function saveTask(taskData: CreateTaskInput): Promise<Task> {
   } catch (error) {
     console.error('Error saving task:', error);
     // For development with mock data, create a fake successful response
-    if (process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost') {
+    if (process.env.NODE_ENV === 'development' || (isBrowser && window.location.hostname === 'localhost')) {
       console.log('Creating mock task response for development');
     }
     throw error;
@@ -165,7 +170,7 @@ export const updateTask = throttle(async (taskData: Partial<Task> & { id: string
   } catch (error) {
     console.error('Error updating task:', error);
     // For development with mock data, create a fake successful response
-    if (process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost') {
+    if (process.env.NODE_ENV === 'development' || (isBrowser && window.location.hostname === 'localhost')) {
       console.log('Creating mock task update response for development');
       const mockTask: Task = {
         ...taskData as Task,
@@ -216,7 +221,7 @@ export async function deleteTask(taskId: string, userId: string): Promise<boolea
   } catch (error) {
     console.error('Error deleting task:', error);
     // For development with mock data, return success
-    if (process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost') {
+    if (process.env.NODE_ENV === 'development' || (isBrowser && window.location.hostname === 'localhost')) {
       console.log('Mock task deletion for development');
       return true;
     }

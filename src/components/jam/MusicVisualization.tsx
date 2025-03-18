@@ -1,4 +1,8 @@
+"use client";
 import React, { useEffect, useRef } from 'react';
+
+// Helper for client-side detection
+const isBrowser = typeof window !== 'undefined';
 
 interface MusicVisualizationProps {
   isPlaying: boolean;
@@ -10,7 +14,7 @@ export default function MusicVisualization({ isPlaying }: MusicVisualizationProp
   // This is a placeholder for a real audio visualization
   // In a real implementation, this would connect to the audio element
   useEffect(() => {
-    if (!canvasRef.current || !isPlaying) return;
+    if (!canvasRef.current || !isPlaying || !isBrowser) return;
     
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
@@ -67,7 +71,9 @@ export default function MusicVisualization({ isPlaying }: MusicVisualizationProp
     
     return () => {
       window.removeEventListener('resize', resizeCanvas);
-      cancelAnimationFrame(animationId);
+      if (typeof animationId !== 'undefined') {
+        cancelAnimationFrame(animationId);
+      }
     };
   }, [isPlaying]);
   

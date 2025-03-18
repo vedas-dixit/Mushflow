@@ -8,6 +8,9 @@ import { updateTask, deleteTask } from "@/utils/taskService";
 import ModernDatePicker from "../datepickercomponent/DatePickerComponent";
 import { uploadAttachments, deleteAttachment, formatFileSize, getFileIcon } from "@/utils/attachmentService";
 
+// Helper for client-side detection
+const isBrowser = typeof window !== 'undefined';
+
 // Define a simple Attachment type
 interface Attachment {
   id: string;
@@ -74,16 +77,18 @@ function Card({
   }, []);
 
   useEffect(() => {
-    if (isExpanded) {
+    if (isExpanded && isBrowser) {
       document.body.style.overflow = 'hidden';
       if (textareaRef.current) {
         adjustTextareaHeight();
       }
-    } else {
+    } else if (isBrowser) {
       document.body.style.overflow = 'unset';
     }
     return () => {
-      document.body.style.overflow = 'unset';
+      if (isBrowser) {
+        document.body.style.overflow = 'unset';
+      }
     };
   }, [isExpanded]);
 
@@ -99,7 +104,7 @@ function Card({
     const textarea = textareaRef.current;
     if (textarea) {
       textarea.style.height = 'auto';
-      const maxHeight = window.innerHeight * 0.5; 
+      const maxHeight = isBrowser ? window.innerHeight * 0.5 : 300; // Default to 300px on server
       
       if (textarea.scrollHeight > maxHeight) {
         textarea.style.height = `${maxHeight}px`;
@@ -143,11 +148,13 @@ function Card({
   };
 
   useEffect(() => {
-    if (isExpanded) {
+    if (isExpanded && isBrowser) {
       document.addEventListener('mousedown', handleClickOutside);
     }
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      if (isBrowser) {
+        document.removeEventListener('mousedown', handleClickOutside);
+      }
     };
   }, [isExpanded]);
 
@@ -344,6 +351,8 @@ function Card({
   
   // Preview file
   const previewFile = (url: string, contentType: string) => {
+    if (!isBrowser) return; // Skip if not in browser environment
+    
     if (contentType.startsWith('image/')) {
       window.open(url, '_blank');
     } else if (contentType.startsWith('video/') || contentType.startsWith('audio/') || contentType.includes('pdf')) {
@@ -356,6 +365,8 @@ function Card({
   
   // Download file
   const downloadFile = (url: string) => {
+    if (!isBrowser) return; // Skip if not in browser environment
+    
     const a = document.createElement('a');
     a.href = url;
     a.download = '';

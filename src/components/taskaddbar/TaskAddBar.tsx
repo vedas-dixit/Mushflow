@@ -10,6 +10,10 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Task } from '@/types/Task';
 import { PredefinedLabels } from '@/utils/predefinedLabels';
+
+// Helper for client-side detection
+const isBrowser = typeof window !== 'undefined';
+
 interface TaskAddBarProps {
   onTaskAdd?: (newTask: Task) => void;
 }
@@ -67,7 +71,7 @@ function TaskAddBar({ onTaskAdd }: TaskAddBarProps) {
       textarea.style.height = 'auto';
       
       // Set a maximum height for the textarea to enable scrolling
-      const maxHeight = window.innerHeight * 0.5; // 50% of viewport height
+      const maxHeight = isBrowser ? window.innerHeight * 0.5 : 300; // 50% of viewport height or default 300px
       
       if (textarea.scrollHeight > maxHeight) {
         textarea.style.height = `${maxHeight}px`;
@@ -94,6 +98,8 @@ function TaskAddBar({ onTaskAdd }: TaskAddBarProps) {
 
   // Add window resize handler to readjust textarea height
   useEffect(() => {
+    if (!isBrowser) return;
+    
     const handleResize = () => {
       adjustTextareaHeight();
     };
