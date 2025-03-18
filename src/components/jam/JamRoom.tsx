@@ -33,7 +33,7 @@ export default function JamRoom({
   const rtm = useRTM();
   
   // UI state
-  const [showChat, setShowChat] = useState(true);
+  const [showChat, setShowChat] = useState(false);
   const [showParticipants, setShowParticipants] = useState(true);
   const [showTrackSelector, setShowTrackSelector] = useState(false);
   const audioRef = React.useRef<HTMLAudioElement>(null);
@@ -454,7 +454,7 @@ export default function JamRoom({
           )}
 
           {/* Chat Panel - Fixed to right side */}
-          <div className={`fixed top-0 right-0 h-full transition-all duration-300 ease-in-out z-5 ${showChat ? 'w-64 md:w-80' : 'w-0'}`}>
+          <div className={`fixed top-0 right-0 h-full transition-all duration-300 ease-in-out z-[2] ${showChat ? 'w-64 md:w-80' : 'w-0'}`}>
             {showChat && (
               <div className="h-full flex flex-col bg-black/50 backdrop-blur-md border-l border-white/10 rounded-l-lg">
                 <div className="flex justify-between items-center p-3 md:p-4 border-b border-white/10">

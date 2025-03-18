@@ -79,7 +79,7 @@ const ModernDatePicker: React.FC<ModernDatePickerProps> = ({
       
 
       {selectedDate && (
-        <div className="absolute z-30 text-sm text-gray-300 flex items-center bg-neutral-700/90 px-2 py-1 rounded-md whitespace-nowrap"
+        <div className="absolute z-30 text-sm text-gray-300 flex items-center bg-neutral-700/90 px-2 py-1 rounded-md whitespace-nowrap -translate-x-14"
         style={{ 
             top: '100%', 
             left: '15px',
