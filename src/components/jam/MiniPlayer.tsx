@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useRef, useEffect, useState } from 'react';
-import { Play, Pause, Volume2, Volume1, VolumeX, X, Maximize2, Music } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { Play, Pause, Volume2, Volume1, VolumeX, X, Music } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '@/redux/hooks';
 import { JamState, setPlaybackState, setVolume, leaveRoom } from '@/redux/features/jamSlice';
 
@@ -11,7 +10,6 @@ interface NavigationState {
 }
 
 export default function MiniPlayer() {
-  const router = useRouter();
   const dispatch = useAppDispatch();
   const jamState = useAppSelector(state => state.jam) as JamState;
   const { currentView } = useAppSelector(state => state.navigation) as NavigationState;

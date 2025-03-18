@@ -10,7 +10,7 @@ import {
   fetchRoomDetails 
 } from '@/redux/features/jamSlice';
 import { useRTM } from '@/providers/RTMProvider';
-import { ArrowLeft, Share2, Users, ChevronRight, ChevronLeft, X, Volume2, Volume1, VolumeX, Music, ChevronDown, ChevronUp, Play, Pause, SkipForward, Send, Clock, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Share2, Users, ChevronRight, ChevronLeft, X, Volume2, Volume1, VolumeX, Music, Play, Pause, Send, Clock } from 'lucide-react';
 
 interface JamRoomProps {
   roomId: string;
@@ -26,7 +26,6 @@ export default function JamRoom({
   roomCode,
   roomName,
   userId,
-  userName,
   onLeaveRoom
 }: JamRoomProps) {
   const dispatch = useAppDispatch();

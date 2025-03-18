@@ -2,10 +2,18 @@
 
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 export default function AuthError() {
   const searchParams = useSearchParams();
-  const error = searchParams.get("error");
+  const [error, setError] = useState<string | null>(null);
+  
+  useEffect(() => {
+    // Only access searchParams in useEffect to ensure client-side execution
+    if (searchParams) {
+      setError(searchParams.get("error"));
+    }
+  }, [searchParams]);
 
   const errorMessages: Record<string, string> = {
     Configuration: "There is a problem with the server configuration.",

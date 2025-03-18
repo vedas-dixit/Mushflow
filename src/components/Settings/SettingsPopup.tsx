@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { ChevronDown, LogOut, Mail, Heart, X } from 'lucide-react';
-import { useSession, signOut } from 'next-auth/react';
+import { signOut } from 'next-auth/react';
 import ContactForm from './ContactForm';
 import UserProfile from './UserProfile';
 import VersionInfo from './VersionInfo';
@@ -14,9 +14,7 @@ interface SettingsPopupProps {
 }
 
 const SettingsPopup: React.FC<SettingsPopupProps> = ({ isOpen, onClose }) => {
-  const { data: session } = useSession();
   const [isContactFormOpen, setIsContactFormOpen] = useState(false);
-  const [showChangelog, setShowChangelog] = useState(false);
   
   if (!isOpen) return null;
   
@@ -38,7 +36,6 @@ const SettingsPopup: React.FC<SettingsPopupProps> = ({ isOpen, onClose }) => {
   };
 
   const handleViewChangelog = () => {
-    setShowChangelog(true);
     // In a real app, you would show a changelog modal or redirect to a changelog page
     console.log('View changelog clicked');
   };

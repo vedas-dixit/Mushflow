@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from "@/lib/auth";
 import { docClient } from '@/lib/dynamodb';
 import { QueryCommand } from '@aws-sdk/lib-dynamodb';
 
@@ -10,6 +10,7 @@ const TRACKS_TABLE_NAME = process.env.TRACKS_DYNAMODB_TABLE || 'MushflowTracks';
 const TABLE_NAME = TRACKS_TABLE_NAME || process.env.DYNAMODB_TABLE;
 
 export async function GET(request: NextRequest) {
+  console.log(request);
   try {
     const session = await getServerSession(authOptions);
     

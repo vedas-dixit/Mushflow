@@ -66,7 +66,7 @@ const ContactForm: React.FC<ContactFormProps> = ({ isOpen, onClose }) => {
                 <Send size={24} className="text-green-500" />
               </div>
               <h3 className="text-xl font-medium text-white mb-2">Message Sent!</h3>
-              <p className="text-neutral-400">We'll get back to you soon.</p>
+              <p className="text-neutral-400">We &apos;ll get back to you soon.</p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">

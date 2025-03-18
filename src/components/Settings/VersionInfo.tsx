@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { Info, Github, GitBranchPlus } from 'lucide-react';
+import { Info, GitBranchPlus } from 'lucide-react';
 
 interface VersionInfoProps {
   version: string;

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from "@/lib/auth";
 import { docClient } from '@/lib/dynamodb';
 import { PutCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 import { v4 as uuidv4 } from 'uuid';
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
-    // Query all rooms
+    console.log(request);
     const result = await docClient.send(new QueryCommand({
       TableName: MAIN_TABLE_NAME,
       IndexName: 'GSI1',

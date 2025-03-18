@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth';
 import { docClient } from '@/lib/dynamodb';
 import { GetCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 
@@ -13,7 +13,7 @@ const MAIN_TABLE_NAME = process.env.DYNAMODB_TABLE;
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { roomId: string } }
+  { params }: { params: Promise<{ roomId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -22,7 +22,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
-    const { roomId } = params;
+    const { roomId } = await params;
     
     if (!roomId) {
       return NextResponse.json({ error: 'Room ID is required' }, { status: 400 });
@@ -30,7 +30,6 @@ export async function GET(
     
     // Get room metadata
     const roomResult = await docClient.send(new GetCommand({
-
       TableName: MAIN_TABLE_NAME,
       Key: {
         PK: `ROOM#${roomId}`,
@@ -50,7 +49,6 @@ export async function GET(
     
     const participantResult = await docClient.send(new GetCommand({
       TableName: MAIN_TABLE_NAME,
-
       Key: participantKey
     }));
     
@@ -60,7 +58,6 @@ export async function GET(
     
     // Get all participants
     const participantsResult = await docClient.send(new QueryCommand({
-
       TableName: MAIN_TABLE_NAME,
       KeyConditionExpression: 'PK = :pk AND begins_with(SK, :sk)',
       ExpressionAttributeValues: {
@@ -81,7 +78,6 @@ export async function GET(
       Limit: 50
     }));
     
-
     // Get current track if there is one from the tracks table
     let currentTrack = null;
     if (roomResult.Item.currentTrackId) {

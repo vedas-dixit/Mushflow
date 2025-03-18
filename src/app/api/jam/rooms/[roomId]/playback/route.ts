@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth';
 import { docClient } from '@/lib/dynamodb';
 import { GetCommand, UpdateCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
 import { v4 as uuidv4 } from 'uuid';
@@ -14,7 +14,7 @@ const CHAT_TABLE_NAME = process.env.CHAT_DYNAMODB_TABLE || 'MushflowChat';
 const MAIN_TABLE_NAME = process.env.DYNAMODB_TABLE;
 export async function POST(
   request: NextRequest,
-  { params }: { params: { roomId: string } }
+  { params }: { params: Promise<{ roomId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -23,7 +23,7 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
-    const { roomId } = params;
+    const { roomId } = await params;
     
     if (!roomId) {
       return NextResponse.json({ error: 'Room ID is required' }, { status: 400 });
@@ -32,7 +32,6 @@ export async function POST(
     // Check if the room exists
     const roomResult = await docClient.send(new GetCommand({
       TableName: MAIN_TABLE_NAME,
-
       Key: {
         PK: `ROOM#${roomId}`,
         SK: 'METADATA'
@@ -51,7 +50,6 @@ export async function POST(
     
     const participantResult = await docClient.send(new GetCommand({
       TableName: MAIN_TABLE_NAME,
-
       Key: participantKey
     }));
     
@@ -107,7 +105,6 @@ export async function POST(
         // Check if the track exists in the dedicated tracks table
         const trackResult = await docClient.send(new GetCommand({
           TableName: TRACKS_TABLE_NAME,
-
           Key: {
             PK: `TRACK#${trackId}`,
             SK: 'METADATA'
@@ -137,7 +134,6 @@ export async function POST(
     
     // Update the room
     await docClient.send(new UpdateCommand({
-
       TableName: MAIN_TABLE_NAME,
       Key: {
         PK: `ROOM#${roomId}`,
@@ -148,7 +144,6 @@ export async function POST(
       ExpressionAttributeNames: expressionAttributeNames
     }));
     
-
     // Add a system message about the action to the chat table
     const messageId = uuidv4();
     
@@ -167,17 +162,13 @@ export async function POST(
     };
     
     await docClient.send(new PutCommand({
-
       TableName: CHAT_TABLE_NAME,
-
       Item: message
     }));
     
     // Update participant's last activity
     await docClient.send(new PutCommand({
-
       TableName: MAIN_TABLE_NAME,
-
       Item: {
         ...participantResult.Item,
         lastActive: timestamp
@@ -186,7 +177,6 @@ export async function POST(
     
     // Get the updated room data
     const updatedRoomResult = await docClient.send(new GetCommand({
-
       TableName: MAIN_TABLE_NAME,
       Key: {
         PK: `ROOM#${roomId}`,
@@ -194,7 +184,6 @@ export async function POST(
       }
     }));
     
-
     // Get current track if there is one from the tracks table
     let currentTrack = null;
     if (updatedRoomResult.Item?.currentTrackId) {

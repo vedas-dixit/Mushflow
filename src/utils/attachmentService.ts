@@ -2,6 +2,9 @@
 import { store } from '@/redux/store';
 import { setLoading } from '@/redux/features/loaderSlice';
 
+// Helper for client-side detection
+const isBrowser = typeof window !== 'undefined';
+
 export interface Attachment {
   id: string;
   taskId: string;
@@ -33,6 +36,8 @@ export const getFileIcon = (contentType: string): string => {
 
 // Preview file
 export const previewFile = (url: string, contentType: string): void => {
+  if (!isBrowser) return; // Check if in browser environment
+  
   if (contentType.startsWith('image/') || 
       contentType.startsWith('video/') || 
       contentType.startsWith('audio/') || 
@@ -46,6 +51,8 @@ export const previewFile = (url: string, contentType: string): void => {
 
 // Download file
 export const downloadFile = (url: string): void => {
+  if (!isBrowser) return; // Check if in browser environment
+  
   const a = document.createElement('a');
   a.href = url;
   a.download = '';

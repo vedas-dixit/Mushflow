@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
-import { Edit2, Check, X } from 'lucide-react';
+import React from 'react';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 
@@ -9,36 +8,36 @@ interface UserProfileProps {
   onUpdate?: (data: { name?: string, about?: string }) => void;
 }
 
-const UserProfile: React.FC<UserProfileProps> = ({ onUpdate }) => {
+const UserProfile: React.FC<UserProfileProps> = () => {
   const { data: session } = useSession();
-  const [isEditingName, setIsEditingName] = useState(false);
-  const [isEditingAbout, setIsEditingAbout] = useState(false);
-  const [name, setName] = useState(session?.user?.name || 'User');
-  const [about, setAbout] = useState('Music lover and collaborative study enthusiast');
+  // const [isEditingName, setIsEditingName] = useState(false);
+  // const [isEditingAbout, setIsEditingAbout] = useState(false);
+  // const [name, setName] = useState(session?.user?.name || 'User');
+  // const [about, setAbout] = useState('Music lover and collaborative study enthusiast');
+  const name = session?.user?.name || 'User';
+  // const handleNameSave = () => {
+  //   setIsEditingName(false);
+  //   if (onUpdate) {
+  //     onUpdate({ name });
+  //   }
+  // };
   
-  const handleNameSave = () => {
-    setIsEditingName(false);
-    if (onUpdate) {
-      onUpdate({ name });
-    }
-  };
+  // const handleAboutSave = () => {
+  //   setIsEditingAbout(false);
+  //   if (onUpdate) {
+  //     onUpdate({ about });
+  //   }
+  // };
   
-  const handleAboutSave = () => {
-    setIsEditingAbout(false);
-    if (onUpdate) {
-      onUpdate({ about });
-    }
-  };
+  // const cancelNameEdit = () => {
+  //   setName(session?.user?.name || 'User');
+  //   setIsEditingName(false);
+  // };
   
-  const cancelNameEdit = () => {
-    setName(session?.user?.name || 'User');
-    setIsEditingName(false);
-  };
-  
-  const cancelAboutEdit = () => {
-    setAbout('Music lover and collaborative study enthusiast');
-    setIsEditingAbout(false);
-  };
+  // const cancelAboutEdit = () => {
+  //   setAbout('Music lover and collaborative study enthusiast');
+  //   setIsEditingAbout(false);
+  // };
   
   return (
     <div className="space-y-6">

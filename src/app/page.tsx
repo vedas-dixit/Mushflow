@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import HomePage from "@/components/homepage/HomePage";
 import { getTasks } from "@/utils/serverActions";
-import { authOptions } from "./api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth";
 
 export default async function Home() {
   // Get the user session

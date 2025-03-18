@@ -1,13 +1,15 @@
 "use client";
 import React, { useEffect, useState, useRef } from "react";
-import { Pin, CheckCircle, Calendar, X, Flag, Tag, Plus, Trash2, CheckCircle2, Paperclip, Download, Eye, XCircle } from "lucide-react";
+import { Pin, Calendar, X, Flag, Trash2, CheckCircle2, Paperclip, Download, Eye, } from "lucide-react";
 import { format } from "date-fns";
 import { Task, TaskPriority } from "@/types/Task";
 import { PredefinedLabels } from "@/utils/predefinedLabels";
 import { updateTask, deleteTask } from "@/utils/taskService";
-import { useSession } from "next-auth/react";
 import ModernDatePicker from "../datepickercomponent/DatePickerComponent";
 import { uploadAttachments, deleteAttachment, formatFileSize, getFileIcon } from "@/utils/attachmentService";
+
+// Helper for client-side detection
+const isBrowser = typeof window !== 'undefined';
 
 // Define a simple Attachment type
 interface Attachment {
@@ -51,7 +53,6 @@ function Card({
   onUpdate,
   onDelete
 }: CardProps) {
-  const { data: session } = useSession();
   const [isPinned, setIsPinned] = useState(pinned);
   const [isCompleted, setIsCompleted] = useState(completed);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -68,10 +69,7 @@ function Card({
   const datePickerRef = useRef<HTMLDivElement>(null);
   const priorityMenuRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isTruncated, setIsTruncated] = useState(true);
   const MAX_CONTENT_LINES = 6;
-  const [datePickerPosition, setDatePickerPosition] = useState({ top: 0, left: 0 });
-  const dateButtonRef = useRef<HTMLButtonElement>(null);
 
   // Debug initial attachments
   useEffect(() => {
@@ -79,16 +77,18 @@ function Card({
   }, []);
 
   useEffect(() => {
-    if (isExpanded) {
+    if (isExpanded && isBrowser) {
       document.body.style.overflow = 'hidden';
       if (textareaRef.current) {
         adjustTextareaHeight();
       }
-    } else {
+    } else if (isBrowser) {
       document.body.style.overflow = 'unset';
     }
     return () => {
-      document.body.style.overflow = 'unset';
+      if (isBrowser) {
+        document.body.style.overflow = 'unset';
+      }
     };
   }, [isExpanded]);
 
@@ -104,7 +104,7 @@ function Card({
     const textarea = textareaRef.current;
     if (textarea) {
       textarea.style.height = 'auto';
-      const maxHeight = window.innerHeight * 0.5; 
+      const maxHeight = isBrowser ? window.innerHeight * 0.5 : 300; // Default to 300px on server
       
       if (textarea.scrollHeight > maxHeight) {
         textarea.style.height = `${maxHeight}px`;
@@ -148,11 +148,13 @@ function Card({
   };
 
   useEffect(() => {
-    if (isExpanded) {
+    if (isExpanded && isBrowser) {
       document.addEventListener('mousedown', handleClickOutside);
     }
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      if (isBrowser) {
+        document.removeEventListener('mousedown', handleClickOutside);
+      }
     };
   }, [isExpanded]);
 
@@ -294,7 +296,7 @@ function Card({
       return editedContent;
     }
     
-    if (isTruncated && editedContent.length > MAX_CONTENT_LINES) {
+    if (editedContent.length > MAX_CONTENT_LINES) {
       return editedContent.slice(0, MAX_CONTENT_LINES);
     }
     
@@ -349,6 +351,8 @@ function Card({
   
   // Preview file
   const previewFile = (url: string, contentType: string) => {
+    if (!isBrowser) return; // Skip if not in browser environment
+    
     if (contentType.startsWith('image/')) {
       window.open(url, '_blank');
     } else if (contentType.startsWith('video/') || contentType.startsWith('audio/') || contentType.includes('pdf')) {
@@ -361,6 +365,8 @@ function Card({
   
   // Download file
   const downloadFile = (url: string) => {
+    if (!isBrowser) return; // Skip if not in browser environment
+    
     const a = document.createElement('a');
     a.href = url;
     a.download = '';
@@ -506,7 +512,7 @@ function Card({
                       {item}
                     </p>
                   ))}
-                  {isTruncated && editedContent.length > MAX_CONTENT_LINES && (
+                  {editedContent.length > MAX_CONTENT_LINES && (
                     <p className="text-gray-400 text-xs">
                       ... {editedContent.length - MAX_CONTENT_LINES} more items
                     </p>
