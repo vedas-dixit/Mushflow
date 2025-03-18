@@ -153,8 +153,9 @@ export const fetchRooms = createAsyncThunk(
 
 export const createRoom = createAsyncThunk(
   'jam/createRoom',
-  async (roomData: { name: string; bannerId?: number }, { rejectWithValue }) => {
+  async (roomData: { name: string; bannerId?: number }, { rejectWithValue, dispatch }) => {
     try {
+      dispatch(setLoading(true));
       const response = await axios.post('/api/jam/rooms', roomData);
       
       // Validate the response data
@@ -169,14 +170,17 @@ export const createRoom = createAsyncThunk(
         return rejectWithValue(error.response.data.error || 'Failed to create room');
       }
       return rejectWithValue('Failed to create room');
+    } finally {
+      dispatch(setLoading(false));
     }
   }
 );
 
 export const joinRoom = createAsyncThunk(
   'jam/joinRoom',
-  async (roomCode: string, { rejectWithValue }) => {
+  async (roomCode: string, { rejectWithValue, dispatch }) => {
     try {
+      dispatch(setLoading(true));
       const response = await axios.post('/api/jam/rooms/join', { roomCode });
       
       // Validate the response data
@@ -191,6 +195,8 @@ export const joinRoom = createAsyncThunk(
         return rejectWithValue(error.response.data.error || 'Failed to join room');
       }
       return rejectWithValue('Failed to join room');
+    } finally {
+      dispatch(setLoading(false));
     }
   }
 );
