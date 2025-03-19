@@ -18,6 +18,14 @@ const SettingsPopup: React.FC<SettingsPopupProps> = ({ isOpen, onClose }) => {
   
   if (!isOpen) return null;
   
+  // Handle clicks on the overlay
+  const handleOverlayClick = (e: React.MouseEvent) => {
+    // Only close if the click was directly on the overlay and not its children
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
   const handleLogout = async () => {
     await signOut({ callbackUrl: '/' });
   };
@@ -42,7 +50,10 @@ const SettingsPopup: React.FC<SettingsPopupProps> = ({ isOpen, onClose }) => {
   
   return (
     <>
-      <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/50">
+      <div 
+        className="fixed inset-0 z-30 flex items-center justify-center bg-black/50"
+        onClick={handleOverlayClick}
+      >
         <div className="relative w-full max-w-md bg-neutral-900 rounded-lg shadow-lg overflow-hidden mt-10">
           {/* Header */}
           <div className="flex justify-between items-center p-4 border-b border-neutral-800">

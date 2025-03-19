@@ -58,10 +58,8 @@ const ModernDatePicker: React.FC<ModernDatePickerProps> = ({
         <div 
         className="absolute z-30"
         style={{ 
-          top: '100%',  // Position below the button
-          left: '15px',    // Align with left edge of button
-          marginTop: '8px',
-          transform: 'translateX(-70%)'
+          marginTop: '0px',
+          transform: 'translateX(-90%) translateY(-110%)',
         }}
       >
           <DatePicker
