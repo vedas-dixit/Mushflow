@@ -57,13 +57,12 @@ function TaskAddBar({ onTaskAdd }: TaskAddBarProps) {
     isPinned: false
   });
 
-  // Create debounced save function
+  // Create debounced save function with smaller delay for better responsiveness
   const debouncedSave = React.useMemo(
-    () => createDebouncedSave(saveToHistory),
+    () => createDebouncedSave(saveToHistory, 300), // Reduce to 300ms for better responsiveness
     [saveToHistory]
   );
 
-  // Predefined labels
 
   const adjustTextareaHeight = () => {
     const textarea = textareaRef.current;
@@ -133,7 +132,7 @@ function TaskAddBar({ onTaskAdd }: TaskAddBarProps) {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isExpanded, title, note]); // Add dependencies to ensure the latest state is used
+  }, [isExpanded, title, note, dueDate, priority, labels, isPinned]); // Add dependencies to ensure the latest state is used
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     adjustTextareaHeight();
@@ -143,13 +142,14 @@ function TaskAddBar({ onTaskAdd }: TaskAddBarProps) {
     if (e.key === 'Enter' && !e.shiftKey && !isExpanded) {
       e.preventDefault();
       setIsExpanded(true);
+      // Preserve current state when expanding, don't reset to empty
       resetHistory({ 
-        title: '', 
-        note: '', 
-        dueDate: null,
-        priority: 'low',
-        labels: [],
-        isPinned: false
+        title, 
+        note, 
+        dueDate,
+        priority,
+        labels,
+        isPinned
       });
     }
   };
@@ -202,12 +202,26 @@ function TaskAddBar({ onTaskAdd }: TaskAddBarProps) {
   }, [isExpanded]);
 
   const handleClose = async () => {
-    // If there's content, save the task
-    if ((title.trim() || note.trim()) && !isSaving) {
+    // Check if we're already saving to prevent double submission
+    if (isSaving) {
+      return;
+    }
+    
+    // Always save metadata changes, even without title/note
+    // If there are no changes at all, just reset and close
+    const hasAnyChanges = 
+      title.trim() !== '' || 
+      note.trim() !== '' || 
+      dueDate !== null || 
+      priority !== 'low' || 
+      labels.length > 0 || 
+      isPinned;
+      
+    if (hasAnyChanges) {
       // Call the save function
       await handleSaveTask();
     } else {
-      // If no content or already saving, just reset the form
+      // If no changes at all, just reset the form
       setIsExpanded(false);
       setTitle('');
       setNote('');
@@ -340,9 +354,22 @@ function TaskAddBar({ onTaskAdd }: TaskAddBarProps) {
 
   // Handle saving the task
   const handleSaveTask = async () => {
-    // Save if there's any content (title or note)
-    if ((!title.trim() && !note.trim()) || isSaving) {
-      // If no content or already saving, just close without saving
+    // Only check if we're already saving to prevent double submission
+    if (isSaving) {
+      return;
+    }
+    
+    // Always save metadata changes, even without title/note
+    // If there are no changes at all, just close without saving
+    const hasAnyChanges = 
+      title.trim() !== '' || 
+      note.trim() !== '' || 
+      dueDate !== null || 
+      priority !== 'low' || 
+      labels.length > 0 || 
+      isPinned;
+    
+    if (!hasAnyChanges) {
       setIsExpanded(false);
       return;
     }
@@ -417,12 +444,12 @@ function TaskAddBar({ onTaskAdd }: TaskAddBarProps) {
               if (!isExpanded) {
                 setIsExpanded(true);
                 resetHistory({ 
-                  title: '', 
-                  note: '', 
-                  dueDate: null,
-                  priority: 'low',
-                  labels: [],
-                  isPinned: false
+                  title, 
+                  note, 
+                  dueDate,
+                  priority,
+                  labels,
+                  isPinned
                 });
               }
             }}

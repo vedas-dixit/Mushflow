@@ -274,19 +274,17 @@ function Card({
       return;
     }
     
-    if (confirm('Are you sure you want to delete this task?')) {
-      try {
-        console.log('Deleting task with ID:', id, 'and userId:', userId);
-        
-        await deleteTask(id, userId);
-        
-        if (onDelete) {
-          onDelete(id);
-        }
-      } catch (error) {
-        console.error('Error deleting task:', error);
-        alert('Failed to delete task. Please try again.');
+    try {
+      console.log('Deleting task with ID:', id, 'and userId:', userId);
+      
+      await deleteTask(id, userId);
+      
+      if (onDelete) {
+        onDelete(id);
       }
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      alert('Failed to delete task. Please try again.');
     }
   };
 

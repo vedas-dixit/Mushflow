@@ -48,13 +48,19 @@ export const useHistory = (initialState: HistoryState): UseHistoryResult => {
   // Save current state to history
   const saveToHistory = (state: HistoryState) => {
     // Only save if the state is different from the current state
+    const currentState = history[historyIndex];
+    
+    // Compare dates by using their ISO strings or null values
+    const currentDateStr = currentState.dueDate ? currentState.dueDate.toISOString() : null;
+    const newDateStr = state.dueDate ? state.dueDate.toISOString() : null;
+    
     if (
-      history[historyIndex].title !== state.title ||
-      history[historyIndex].note !== state.note ||
-      history[historyIndex].dueDate !== state.dueDate ||
-      history[historyIndex].priority !== state.priority ||
-      JSON.stringify(history[historyIndex].labels) !== JSON.stringify(state.labels) ||
-      history[historyIndex].isPinned !== state.isPinned
+      currentState.title !== state.title ||
+      currentState.note !== state.note ||
+      currentDateStr !== newDateStr ||
+      currentState.priority !== state.priority ||
+      JSON.stringify(currentState.labels) !== JSON.stringify(state.labels) ||
+      currentState.isPinned !== state.isPinned
     ) {
       // Remove any future history if we're not at the end
       const newHistory = history.slice(0, historyIndex + 1);
