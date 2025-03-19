@@ -469,6 +469,7 @@ function TaskAddBar({ onTaskAdd }: TaskAddBarProps) {
               <ModernDatePicker
                 selectedDate={dueDate}
                 onChange={handleDateChange}
+                isExpanded={isExpanded}
               />
               
               {/* Priority Selector */}
@@ -484,7 +485,7 @@ function TaskAddBar({ onTaskAdd }: TaskAddBarProps) {
                 {showPriorityMenu && (
                   <div 
                     ref={priorityMenuRef}
-                    className="absolute left-0 bottom-full mb-2 bg-neutral-700 rounded-md shadow-lg p-2 w-32"
+                    className="fixed top-full mt-2 left-0 z-[9999] bg-neutral-700 rounded-md shadow-lg p-2 w-32"
                   >
                     <div className="text-xs text-gray-300 mb-1 px-2">Priority</div>
                     <button 
@@ -525,7 +526,7 @@ function TaskAddBar({ onTaskAdd }: TaskAddBarProps) {
                 {showLabelsMenu && (
                   <div 
                     ref={labelsMenuRef}
-                    className="absolute left-0 bottom-full mb-2 bg-neutral-700 rounded-md shadow-lg p-2 w-48"
+                    className="fixed top-full mt-2 left-0 z-[9999] bg-neutral-700 rounded-md shadow-lg p-2 w-48"
                   >
                     <div className="text-xs text-gray-300 mb-1 px-2">Labels</div>
                     

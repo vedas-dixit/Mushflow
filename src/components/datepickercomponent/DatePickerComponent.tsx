@@ -8,11 +8,13 @@ import "../../styles/DatePicker.css";
 interface ModernDatePickerProps {
   selectedDate: Date | null;
   onChange: (date: Date | null) => void;
+  isExpanded?: boolean;
 }
 
 const ModernDatePicker: React.FC<ModernDatePickerProps> = ({
   selectedDate,
-  onChange
+  onChange,
+  isExpanded = false
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -58,8 +60,8 @@ const ModernDatePicker: React.FC<ModernDatePickerProps> = ({
         <div 
         className="absolute z-30"
         style={{ 
-          marginTop: '0px',
-          transform: 'translateX(-90%) translateY(-110%)',
+          marginTop: isExpanded ? '10px' : '0px',
+          transform: isExpanded ? 'translateX(-90%)' : 'translateX(-90%) translateY(-110%)',
         }}
       >
           <DatePicker
@@ -79,9 +81,9 @@ const ModernDatePicker: React.FC<ModernDatePickerProps> = ({
       {selectedDate && (
         <div className="absolute z-30 text-sm text-gray-300 flex items-center bg-neutral-700/90 px-2 py-1 rounded-md whitespace-nowrap -translate-x-14"
         style={{ 
-            top: '100%', 
+            top: isExpanded ? '45px' : '100%', 
             left: '15px',
-            marginTop: '20px'
+            marginTop: isExpanded ? '0' : '20px'
           }}
         >
           <Calendar size={14} className="mr-1 text-blue-400" />
