@@ -4,7 +4,7 @@ import React, { useEffect, useState, createContext, useContext, useRef } from 'r
 import { Search, LayoutGrid, LogIn, LogOut, Music, Pin, X } from 'lucide-react';
 import { LightbulbIcon } from 'lucide-react';
 import { useSession, signIn, signOut } from 'next-auth/react';
-import { useAppDispatch } from '@/redux/hooks';
+import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { setCurrentView } from '@/redux/features/navigationSlice';
 import { showLogin } from '@/redux/features/authSlice';
 import { SettingsButton } from '@/components/Settings';
@@ -84,7 +84,7 @@ export const HeaderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 const HeaderWithContext = () => {
     const { data: session, status } = useSession();
     const isAuthenticated = status === 'authenticated';
-    const { navItems, setActiveNavId, searchQuery, setSearchQuery, isSearchExpanded, setIsSearchExpanded } = useHeader();
+    const { navItems, setActiveNavId, searchQuery, setSearchQuery, isSearchExpanded, setIsSearchExpanded, activeNavId } = useHeader();
     const dispatch = useAppDispatch();
     const searchRef = useRef<HTMLDivElement>(null);
     const [isClosing, setIsClosing] = useState(false);
@@ -136,6 +136,8 @@ const HeaderWithContext = () => {
         }
       }, [status, dispatch]);
 
+    // Don't show search on JAM page
+    const shouldShowSearch = activeNavId !== 'jam';
 
     return (
         <>
@@ -145,39 +147,43 @@ const HeaderWithContext = () => {
                     <span className="ml-2 text-xl text-white">MushFlow</span>
                 </div>
 
-                {/* Desktop search - hidden on mobile */}
-                <div className="hidden md:flex flex-1 mx-8">
-                    <div className={`flex items-center w-full max-w-2xl bg-neutral-800 border ${searchQuery ? 'border-blue-500/70' : 'border-neutral-700'} rounded-full px-3 py-1.5 transition-all ease-in-out duration-200 hover:border-neutral-600 focus-within:border-neutral-500 focus-within:shadow-sm focus-within:shadow-neutral-700/50`}>
-                        <Search className={`w-4 h-4 ${searchQuery ? 'text-blue-400' : 'text-neutral-400'}`} />
-                        <input
-                            type="text"
-                            placeholder="Search tasks..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full ml-3 bg-transparent border-none outline-none placeholder-neutral-500 text-neutral-300 text-sm"
-                        />
-                        {searchQuery && (
-                            <button 
-                                onClick={() => setSearchQuery('')}
-                                className="p-0.5 rounded-full text-neutral-400 hover:text-white hover:bg-neutral-700 transition-colors"
-                            >
-                                <X size={14} />
-                            </button>
-                        )}
+                {/* Desktop search - hidden on mobile and on JAM page */}
+                {shouldShowSearch && (
+                    <div className="hidden md:flex flex-1 mx-8">
+                        <div className={`flex items-center w-full max-w-2xl bg-neutral-800 border ${searchQuery ? 'border-blue-500/70' : 'border-neutral-700'} rounded-full px-3 py-1.5 transition-all ease-in-out duration-200 hover:border-neutral-600 focus-within:border-neutral-500 focus-within:shadow-sm focus-within:shadow-neutral-700/50`}>
+                            <Search className={`w-4 h-4 ${searchQuery ? 'text-blue-400' : 'text-neutral-400'}`} />
+                            <input
+                                type="text"
+                                placeholder="Search tasks..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full ml-3 bg-transparent border-none outline-none placeholder-neutral-500 text-neutral-300 text-sm"
+                            />
+                            {searchQuery && (
+                                <button 
+                                    onClick={() => setSearchQuery('')}
+                                    className="p-0.5 rounded-full text-neutral-400 hover:text-white hover:bg-neutral-700 transition-colors"
+                                >
+                                    <X size={14} />
+                                </button>
+                            )}
+                        </div>
                     </div>
-                </div>
+                )}
 
-                {/* Mobile Search Icon - visible only on mobile */}
-                <div className="flex md:hidden ml-auto mr-2">
-                    <button 
-                        onClick={() => isSearchExpanded ? handleSearchClose() : setIsSearchExpanded(true)}
-                        className="p-2 rounded-full text-neutral-300 hover:bg-neutral-700 hover:text-white transition-colors"
-                    >
-                        <Search className="w-5 h-5" />
-                    </button>
-                </div>
+                {/* Mobile Search Icon - visible only on mobile and when not on JAM page */}
+                {shouldShowSearch && (
+                    <div className="flex md:hidden ml-auto mr-2">
+                        <button 
+                            onClick={() => isSearchExpanded ? handleSearchClose() : setIsSearchExpanded(true)}
+                            className="p-2 rounded-full text-neutral-300 hover:bg-neutral-700 hover:text-white transition-colors"
+                        >
+                            <Search className="w-5 h-5" />
+                        </button>
+                    </div>
+                )}
 
-                <div className="flex items-center ">
+                <div className={`flex items-center ${shouldShowSearch ? '' : 'ml-auto'}`}>
                     {/* Show settings button only on mobile */}
                     <div className="md:hidden">
                         <SettingsButton />
@@ -212,8 +218,8 @@ const HeaderWithContext = () => {
                 </div>
             </div>
 
-            {/* Mobile expanded search overlay - appears when search is expanded */}
-            {(isSearchExpanded || isClosing) && (
+            {/* Mobile expanded search overlay - appears when search is expanded and not on JAM page */}
+            {shouldShowSearch && (isSearchExpanded || isClosing) && (
                 <div 
                     ref={searchRef}
                     className={`fixed md:hidden top-0 left-0 right-0 z-40 bg-stone-800 p-3 shadow-md ${isClosing ? 'animate-slideUp' : 'animate-slideDown'}`}
@@ -319,6 +325,12 @@ function HeaderComponent() {
     const searchRef = useRef<HTMLDivElement>(null);
     const dispatch = useAppDispatch();
     
+    // Get current view from Redux
+    const currentView = useAppSelector(state => state.navigation.currentView);
+    
+    // Don't show search on JAM page
+    const shouldShowSearch = currentView !== 'jam';
+    
     // Handle clicks outside of the search bar
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
@@ -380,39 +392,43 @@ function HeaderComponent() {
                     </div>
                 </div>
 
-                {/* Desktop search - hidden on mobile */}
-                <div className="hidden md:flex flex-1 mx-8">
-                    <div className={`flex items-center w-full max-w-2xl bg-neutral-800 border ${searchQuery ? 'border-blue-500/70' : 'border-neutral-700'} rounded-full px-3 py-1.5 transition-all duration-200 hover:border-neutral-600 focus-within:border-neutral-500 focus-within:shadow-sm focus-within:shadow-neutral-700/50`}>
-                        <Search className={`w-4 h-4 ${searchQuery ? 'text-blue-400' : 'text-neutral-400'}`} />
-                        <input
-                            type="text"
-                            placeholder="Search tasks..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full ml-3 bg-transparent border-none outline-none placeholder-neutral-500 text-neutral-300 text-sm"
-                        />
-                        {searchQuery && (
-                            <button 
-                                onClick={() => setSearchQuery('')}
-                                className="p-0.5 rounded-full text-neutral-400 hover:text-white hover:bg-neutral-700 transition-colors"
-                            >
-                                <X size={14} />
-                            </button>
-                        )}
+                {/* Desktop search - hidden on mobile and on JAM page */}
+                {shouldShowSearch && (
+                    <div className="hidden md:flex flex-1 mx-8">
+                        <div className={`flex items-center w-full max-w-2xl bg-neutral-800 border ${searchQuery ? 'border-blue-500/70' : 'border-neutral-700'} rounded-full px-3 py-1.5 transition-all duration-200 hover:border-neutral-600 focus-within:border-neutral-500 focus-within:shadow-sm focus-within:shadow-neutral-700/50`}>
+                            <Search className={`w-4 h-4 ${searchQuery ? 'text-blue-400' : 'text-neutral-400'}`} />
+                            <input
+                                type="text"
+                                placeholder="Search tasks..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full ml-3 bg-transparent border-none outline-none placeholder-neutral-500 text-neutral-300 text-sm"
+                            />
+                            {searchQuery && (
+                                <button 
+                                    onClick={() => setSearchQuery('')}
+                                    className="p-0.5 rounded-full text-neutral-400 hover:text-white hover:bg-neutral-700 transition-colors"
+                                >
+                                    <X size={14} />
+                                </button>
+                            )}
+                        </div>
                     </div>
-                </div>
+                )}
 
-                {/* Mobile Search Icon - visible only on mobile */}
-                <div className="flex md:hidden ml-auto mr-2">
-                    <button 
-                        onClick={() => isSearchExpanded ? handleSearchClose() : setIsSearchExpanded(true)}
-                        className="p-2 rounded-full text-neutral-300 hover:bg-neutral-700 hover:text-white transition-colors"
-                    >
-                        <Search className="w-5 h-5" />
-                    </button>
-                </div>
+                {/* Mobile Search Icon - visible only on mobile and when not on JAM page */}
+                {shouldShowSearch && (
+                    <div className="flex md:hidden ml-auto mr-2">
+                        <button 
+                            onClick={() => isSearchExpanded ? handleSearchClose() : setIsSearchExpanded(true)}
+                            className="p-2 rounded-full text-neutral-300 hover:bg-neutral-700 hover:text-white transition-colors"
+                        >
+                            <Search className="w-5 h-5" />
+                        </button>
+                    </div>
+                )}
 
-                <div className="flex items-center space-x-2">
+                <div className={`flex items-center ${shouldShowSearch ? '' : 'ml-auto'}`}>
                     {/* Show settings button only on mobile */}
                     <div className="md:hidden">
                         <SettingsButton />
@@ -466,8 +482,8 @@ function HeaderComponent() {
                 </div>
             </div>
 
-            {/* Mobile expanded search overlay - appears when search is expanded */}
-            {(isSearchExpanded || isClosing) && (
+            {/* Mobile expanded search overlay - appears when search is expanded and not on JAM page */}
+            {shouldShowSearch && (isSearchExpanded || isClosing) && (
                 <div 
                     ref={searchRef}
                     className={`fixed md:hidden top-0 left-0 right-0 z-40 bg-stone-800 p-3 shadow-md ${isClosing ? 'animate-slideUp' : 'animate-slideDown'}`}

@@ -225,7 +225,7 @@ export default function JamRoom({
   };
 
   return (
-    <div className="relative h-screen w-full overflow-hidden">
+    <div className="relative h-[94vh] w-full overflow-hidden">
       {/* Audio Element */}
       {jamState.currentTrack && (
         <audio ref={audioRef} src={jamState.currentTrack.url} />

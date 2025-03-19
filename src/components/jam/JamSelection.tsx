@@ -92,7 +92,7 @@ export default function JamSelection({
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen p-4 relative bg-gradient-to-b from-black to-neutral-900 noise-bg ml-0 md:ml-11">
+    <div className="flex flex-col items-center justify-center h-[94vh] p-4 relative bg-gradient-to-b from-black to-neutral-900 noise-bg ml-0 md:ml-11">
       <div className="w-full max-w-md bg-black/40 backdrop-blur-md border border-white/10 rounded-xl shadow-xl overflow-hidden z-10">
         <div className="p-8">
           <div className="text-center mb-8">

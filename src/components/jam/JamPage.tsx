@@ -159,7 +159,7 @@ export default function JamPage() {
   }
 
   return (
-    <div className="h-full bg-neutral-900 text-white pointer-events-auto">
+    <div className="h-lful bg-neutral-900 text-white pointer-events-auto">
       {!jamState.inRoom ? (
         <JamSelection 
           onRoomCreated={handleRoomEntered}
