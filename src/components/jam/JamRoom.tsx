@@ -37,6 +37,14 @@ export default function JamRoom({
   const [showParticipants, setShowParticipants] = useState(true);
   const [showTrackSelector, setShowTrackSelector] = useState(false);
   const audioRef = React.useRef<HTMLAudioElement>(null);
+  const chatContainerRef = React.useRef<HTMLDivElement>(null);
+  
+  // Auto-scroll chat to bottom when new messages arrive
+  useEffect(() => {
+    if (chatContainerRef.current && showChat) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [jamState.messages, showChat]);
   
   // Periodically refresh room data as a fallback
   useEffect(() => {
@@ -470,7 +478,11 @@ export default function JamRoom({
                 </div>
                 
                 {/* Messages - Fixed height to ensure message input is visible */}
-                <div className="flex-1 p-3 md:p-4 overflow-y-auto" style={{ height: 'calc(100vh - 120px)' }}>
+                <div 
+                  ref={chatContainerRef}
+                  className="flex-1 p-3 md:p-4 overflow-y-auto" 
+                  style={{ height: 'calc(100vh - 120px)' }}
+                >
                   <div className="space-y-2 md:space-y-3">
                     {jamState.messages.map(message => (
                       <div 
