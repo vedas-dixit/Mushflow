@@ -11,6 +11,8 @@ import {
 } from '@/redux/features/jamSlice';
 import { useRTM } from '@/providers/RTMProvider';
 import { ArrowLeft, Share2, Users, ChevronRight, ChevronLeft, X, Volume2, Volume1, VolumeX, Music, Play, Pause, Send, Clock } from 'lucide-react';
+import DrawBoard from './DrawBoard';
+import { Pencil } from 'lucide-react';
 
 interface JamRoomProps {
   roomId: string;
@@ -38,6 +40,7 @@ export default function JamRoom({
   const [showTrackSelector, setShowTrackSelector] = useState(false);
   const audioRef = React.useRef<HTMLAudioElement>(null);
   const chatContainerRef = React.useRef<HTMLDivElement>(null);
+  const [isDrawBoardVisible, setIsDrawBoardVisible] = useState(false);
   
   // Auto-scroll chat to bottom when new messages arrive
   useEffect(() => {
@@ -576,6 +579,23 @@ export default function JamRoom({
           </button>
         </div>
       </div>
+
+      {/* Add Draw Board Toggle Button */}
+      <button
+        onClick={() => setIsDrawBoardVisible(!isDrawBoardVisible)}
+        className="fixed bottom-4 right-4 bg-amber-500 hover:bg-amber-600 text-white p-3 rounded-full shadow-lg transition-colors"
+      >
+        <Pencil size={24} />
+      </button>
+
+      {/* Draw Board */}
+      <DrawBoard
+        roomId={roomId}
+        userId={userId}
+        userName={jamState.userName}
+        isVisible={isDrawBoardVisible}
+        onClose={() => setIsDrawBoardVisible(false)}
+      />
     </div>
   );
 } 

@@ -77,6 +77,9 @@ export interface JamState {
   
   // RTM state
   rtmConnected: boolean;
+  
+  // New userName property
+  userName: string;
 }
 
 // Define the initial state
@@ -118,6 +121,9 @@ const initialState: JamState = {
   
   // RTM state
   rtmConnected: false,
+  
+  // New userName property
+  userName: '',
 };
 
 // Async thunks

@@ -9,6 +9,7 @@ import { useSession } from 'next-auth/react';
 // Define the RTM context type
 interface RTMContextType {
   isConnected: boolean;
+  client: any; // Agora RTM client instance
   joinChannel: (roomId: string) => Promise<void>;
   leaveChannel: () => Promise<void>;
   sendChannelMessage: (content: string, messageType: 'USER_MESSAGE' | 'SYSTEM_MESSAGE') => Promise<boolean>;
@@ -19,6 +20,7 @@ interface RTMContextType {
 // Create the context with a default value
 const RTMContext = createContext<RTMContextType>({
   isConnected: false,
+  client: null,
   joinChannel: async () => {},
   leaveChannel: async () => {},
   sendChannelMessage: async () => false,
@@ -638,6 +640,7 @@ export function RTMProvider({ children }: RTMProviderProps) {
   return (
     <RTMContext.Provider value={{
       isConnected,
+      client,
       joinChannel,
       leaveChannel,
       sendChannelMessage,
