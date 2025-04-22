@@ -184,7 +184,7 @@ export default function JamSelection({
                 </div>
               </div>
               
-              <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
+              <div className="space-y-1 overflow-auto h-40 pr-2 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent hover:scrollbar-thumb-white/20">
                 {availableRooms.map(room => (
                   <div 
                     key={room.id}
